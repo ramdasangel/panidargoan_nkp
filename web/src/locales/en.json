@@ -1,0 +1,135 @@
+{
+  "app": {
+    "title": "PaniDarGoan",
+    "subtitle": "Watershed & Project Platform"
+  },
+  "login": {
+    "heading": "Sign in",
+    "subheading": "Select a demo user",
+    "selectUser": "Select user",
+    "signIn": "Sign in",
+    "loading": "Loading users…",
+    "failed": "Sign in failed"
+  },
+  "nav": {
+    "map": "Map",
+    "logout": "Sign out",
+    "language": "Language"
+  },
+  "map": {
+    "loading": "Loading boundaries…",
+    "villageCount": "{{count}} villages",
+    "population": "Population",
+    "cattle": "Cattle",
+    "sheepGoat": "Sheep & Goat",
+    "slope": "Avg slope",
+    "slopeUnit": "%",
+    "layers": "Layers",
+    "layerVillages": "Villages",
+    "layerTalukas": "Talukas",
+    "layerWatersheds": "Watersheds",
+    "layerWaterSources": "Water sources",
+    "layerTerrain": "Terrain (DEM)",
+    "basemap": "Base map"
+  },
+  "addWS": {
+    "openButton": "Add water body",
+    "title": "Add water body",
+    "type": "Type",
+    "name": "Name",
+    "namePh": "e.g. Manchar percolation tank",
+    "notes": "Notes",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "needGeometry": "Please click on the map to set the geometry first.",
+    "needName": "Please give it a name.",
+    "clickPoint": "Click on the map to place the point.",
+    "clickLine": "Click on the map to add points to the line ({{count}} so far).",
+    "clickPolygon": "Click on the map to outline the polygon ({{count}} corners so far).",
+    "pointsCount": "{{count}} point(s)",
+    "clearPoints": "Clear points"
+  },
+  "watershed": {
+    "title": "Watersheds",
+    "areaKm2": "Area",
+    "level": "Level",
+    "kind_river_basin": "River basin",
+    "kind_sub_basin": "Sub-basin",
+    "kind_catchment": "Catchment",
+    "kind_sub_catchment": "Sub-catchment",
+    "kind_watershed": "Watershed",
+    "kind_sub_watershed": "Sub-watershed",
+    "kind_micro_watershed": "Micro-watershed"
+  },
+  "waterSource": {
+    "capacity": "Capacity",
+    "capacityUnit": "m³",
+    "depth": "Depth",
+    "depthUnit": "m",
+    "condition": "Condition",
+    "type_river": "River",
+    "type_stream": "Stream",
+    "type_canal": "Canal",
+    "type_pond": "Pond",
+    "type_lake": "Lake",
+    "type_well": "Well",
+    "type_borewell": "Borewell",
+    "type_check_dam": "Check dam",
+    "type_bandhara": "Bandhara",
+    "type_kt_weir": "KT weir",
+    "type_percolation_tank": "Percolation tank",
+    "type_farm_pond": "Farm pond",
+    "type_spring": "Spring",
+    "type_other": "Other"
+  },
+  "tabs": {
+    "map": "Map",
+    "projects": "Projects"
+  },
+  "projects": {
+    "title": "Projects",
+    "back": "Back to projects",
+    "tasks": "Tasks",
+    "completed": "completed",
+    "ofBudget": "of budget",
+    "ofPlanned": "of planned",
+    "col_code": "Code",
+    "col_name": "Name",
+    "col_status": "Status",
+    "col_sponsor": "Sponsor",
+    "col_budget": "Budget",
+    "col_planned": "Planned",
+    "col_actual": "Actual",
+    "col_progress": "Progress",
+    "col_dates": "Dates",
+    "status_planning": "Planning",
+    "status_active": "Active",
+    "status_on_hold": "On hold",
+    "status_completed": "Completed",
+    "status_cancelled": "Cancelled"
+  },
+  "tasks": {
+    "geoLinks": "Linked to",
+    "allocations": "Resource allocations",
+    "status_not_started": "Not started",
+    "status_in_progress": "In progress",
+    "status_blocked": "Blocked",
+    "status_completed": "Completed"
+  },
+  "rollup": {
+    "planned": "Planned",
+    "actual": "Actual",
+    "tasks": "tasks",
+    "byProject": "By project",
+    "taskList": "Tasks",
+    "empty": "No project work linked to this watershed yet.",
+    "link_direct_watershed": "Direct",
+    "link_water_source_in_subtree": "Via water source",
+    "link_village_overlap": "Via village"
+  },
+  "lang": {
+    "en": "English",
+    "mr": "मराठी"
+  }
+}

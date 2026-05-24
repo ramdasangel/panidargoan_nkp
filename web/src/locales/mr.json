@@ -1,0 +1,135 @@
+{
+  "app": {
+    "title": "पाणीदारगाव",
+    "subtitle": "पाणलोट व प्रकल्प मंच"
+  },
+  "login": {
+    "heading": "साइन इन",
+    "subheading": "डेमो वापरकर्ता निवडा",
+    "selectUser": "वापरकर्ता निवडा",
+    "signIn": "साइन इन करा",
+    "loading": "वापरकर्ते लोड होत आहेत…",
+    "failed": "साइन इन अयशस्वी"
+  },
+  "nav": {
+    "map": "नकाशा",
+    "logout": "साइन आउट",
+    "language": "भाषा"
+  },
+  "map": {
+    "loading": "सीमा लोड होत आहेत…",
+    "villageCount": "{{count}} गावे",
+    "population": "लोकसंख्या",
+    "cattle": "गुरे",
+    "sheepGoat": "मेंढ्या व बकऱ्या",
+    "slope": "सरासरी उतार",
+    "slopeUnit": "%",
+    "layers": "स्तर",
+    "layerVillages": "गावे",
+    "layerTalukas": "तालुके",
+    "layerWatersheds": "पाणलोट",
+    "layerWaterSources": "पाणी स्रोत",
+    "layerTerrain": "भूभाग (उंची नकाशा)",
+    "basemap": "बेस नकाशा"
+  },
+  "addWS": {
+    "openButton": "जलस्रोत जोडा",
+    "title": "जलस्रोत जोडा",
+    "type": "प्रकार",
+    "name": "नाव",
+    "namePh": "उदा. मंचर मुरूण तलाव",
+    "notes": "टीप",
+    "cancel": "रद्द",
+    "save": "साठवा",
+    "saving": "साठवत आहे…",
+    "needGeometry": "कृपया नकाशावर क्लिक करून भूगणित निवडा.",
+    "needName": "कृपया नाव द्या.",
+    "clickPoint": "बिंदू ठेवण्यासाठी नकाशावर क्लिक करा.",
+    "clickLine": "रेषेसाठी नकाशावर बिंदू जोडण्यासाठी क्लिक करा ({{count}} पर्यंत).",
+    "clickPolygon": "बहुभुजासाठी कोपरे क्लिक करा ({{count}} पर्यंत).",
+    "pointsCount": "{{count}} बिंदू",
+    "clearPoints": "बिंदू पुसा"
+  },
+  "watershed": {
+    "title": "पाणलोट",
+    "areaKm2": "क्षेत्र",
+    "level": "स्तर",
+    "kind_river_basin": "नदी खोरे",
+    "kind_sub_basin": "उप-खोरे",
+    "kind_catchment": "जलग्रहण",
+    "kind_sub_catchment": "उप-जलग्रहण",
+    "kind_watershed": "पाणलोट",
+    "kind_sub_watershed": "उप-पाणलोट",
+    "kind_micro_watershed": "सूक्ष्म-पाणलोट"
+  },
+  "waterSource": {
+    "capacity": "क्षमता",
+    "capacityUnit": "घ.मी.",
+    "depth": "खोली",
+    "depthUnit": "मी",
+    "condition": "स्थिती",
+    "type_river": "नदी",
+    "type_stream": "ओढा",
+    "type_canal": "कालवा",
+    "type_pond": "तळे",
+    "type_lake": "सरोवर",
+    "type_well": "विहीर",
+    "type_borewell": "बोअरवेल",
+    "type_check_dam": "चेक डॅम",
+    "type_bandhara": "बंधारा",
+    "type_kt_weir": "के.टी. वियर",
+    "type_percolation_tank": "मुरूण तलाव",
+    "type_farm_pond": "शेततळे",
+    "type_spring": "झरा",
+    "type_other": "इतर"
+  },
+  "tabs": {
+    "map": "नकाशा",
+    "projects": "प्रकल्प"
+  },
+  "projects": {
+    "title": "प्रकल्प",
+    "back": "प्रकल्प यादीकडे परत",
+    "tasks": "कामे",
+    "completed": "पूर्ण",
+    "ofBudget": "बजेटच्या",
+    "ofPlanned": "नियोजितच्या",
+    "col_code": "कोड",
+    "col_name": "नाव",
+    "col_status": "स्थिती",
+    "col_sponsor": "प्रायोजक",
+    "col_budget": "बजेट",
+    "col_planned": "नियोजित",
+    "col_actual": "प्रत्यक्ष",
+    "col_progress": "प्रगती",
+    "col_dates": "तारखा",
+    "status_planning": "नियोजन",
+    "status_active": "सुरू",
+    "status_on_hold": "थांबवले",
+    "status_completed": "पूर्ण",
+    "status_cancelled": "रद्द"
+  },
+  "tasks": {
+    "geoLinks": "जोडलेले",
+    "allocations": "संसाधन वाटप",
+    "status_not_started": "सुरू नाही",
+    "status_in_progress": "सुरू",
+    "status_blocked": "अडकलेले",
+    "status_completed": "पूर्ण"
+  },
+  "rollup": {
+    "planned": "नियोजित",
+    "actual": "प्रत्यक्ष",
+    "tasks": "कामे",
+    "byProject": "प्रकल्पनिहाय",
+    "taskList": "कामे",
+    "empty": "या पाणलोटाशी अद्याप कोणताही प्रकल्प जोडलेला नाही.",
+    "link_direct_watershed": "थेट",
+    "link_water_source_in_subtree": "जलस्रोताद्वारे",
+    "link_village_overlap": "गावाद्वारे"
+  },
+  "lang": {
+    "en": "English",
+    "mr": "मराठी"
+  }
+}

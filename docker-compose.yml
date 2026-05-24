@@ -1,0 +1,74 @@
+services:
+  db:
+    build: ./db
+    image: panidargoan-db:local
+    container_name: panidargoan-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-panidargoan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-panidargoan}
+      POSTGRES_DB: ${POSTGRES_DB:-panidargoan}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-panidargoan}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: panidargoan-redis
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    container_name: panidargoan-api
+    profiles: ["app"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-panidargoan}:${POSTGRES_PASSWORD:-panidargoan}@db:5432/${POSTGRES_DB:-panidargoan}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      AUTH_MODE: ${AUTH_MODE:-dummy}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      API_PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: ""
+        VITE_AUTH_MODE: ${AUTH_MODE:-dummy}
+    container_name: panidargoan-web
+    profiles: ["app"]
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

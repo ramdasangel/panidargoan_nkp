@@ -1,0 +1,298 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis, pgcrypto]
+}
+
+enum Role {
+  admin
+  project_manager
+  field_user
+  viewer
+}
+
+model User {
+  id                  String       @id @default(uuid())
+  email               String       @unique
+  name                String
+  role                Role
+  googleSub           String?      @unique
+  createdProjects     Project[]    @relation("ProjectCreatedBy")
+  assignedTasks       Task[]       @relation("TaskAssignee")
+  recordedCostEntries CostEntry[]  @relation("CostEntryRecordedBy")
+  createdAt           DateTime     @default(now())
+}
+
+model Country {
+  id        String                                         @id @default(uuid())
+  code      String                                         @unique
+  name      String
+  boundary  Unsupported("geography(MultiPolygon, 4326)")?
+  states    State[]
+  createdAt DateTime                                       @default(now())
+}
+
+model State {
+  id        String                                         @id @default(uuid())
+  code      String                                         @unique
+  name      String
+  countryId String
+  country   Country                                        @relation(fields: [countryId], references: [id])
+  districts District[]
+  boundary  Unsupported("geography(MultiPolygon, 4326)")?
+  createdAt DateTime                                       @default(now())
+}
+
+model District {
+  id        String                                         @id @default(uuid())
+  code      String                                         @unique
+  name      String
+  stateId   String
+  state     State                                          @relation(fields: [stateId], references: [id])
+  talukas   Taluka[]
+  boundary  Unsupported("geography(MultiPolygon, 4326)")?
+  createdAt DateTime                                       @default(now())
+}
+
+model Taluka {
+  id         String                                         @id @default(uuid())
+  code       String                                         @unique
+  name       String
+  districtId String
+  district   District                                       @relation(fields: [districtId], references: [id])
+  villages   Village[]
+  boundary   Unsupported("geography(MultiPolygon, 4326)")?
+  createdAt  DateTime                                       @default(now())
+}
+
+model Village {
+  id                  String                                            @id @default(uuid())
+  code                String                                            @unique
+  name                String
+  talukaId            String
+  taluka              Taluka                                            @relation(fields: [talukaId], references: [id])
+  population          Int?
+  cattleCount         Int?
+  sheepGoatCount      Int?
+  otherLivestockCount Int?
+  avgSlopePercent     Float?
+  boundary            Unsupported("geography(MultiPolygon, 4326)")?
+  contours            Unsupported("geometry(MultiLineStringZ, 4326)")?
+  taskGeoLinks        TaskGeoLink[]
+  createdAt           DateTime                                          @default(now())
+}
+
+enum WaterSourceType {
+  river
+  stream
+  canal
+  pond
+  lake
+  well
+  borewell
+  check_dam
+  bandhara
+  kt_weir
+  percolation_tank
+  farm_pond
+  spring
+  other
+}
+
+model Watershed {
+  id           String                                         @id @default(uuid())
+  code         String                                         @unique
+  name         String
+  kind         String
+  level        Int
+  parentId     String?
+  parent       Watershed?                                     @relation("WatershedTree", fields: [parentId], references: [id])
+  children     Watershed[]                                    @relation("WatershedTree")
+  areaKm2      Float?
+  boundary     Unsupported("geography(MultiPolygon, 4326)")?
+  waterSources WaterSource[]
+  taskGeoLinks TaskGeoLink[]
+  createdAt    DateTime                                       @default(now())
+
+  @@index([parentId])
+  @@index([level])
+}
+
+model WaterSource {
+  id          String                                      @id @default(uuid())
+  code        String                                      @unique
+  name        String
+  type        WaterSourceType
+  watershedId String?
+  watershed   Watershed?                                  @relation(fields: [watershedId], references: [id])
+  capacityM3  Float?
+  depthM      Float?
+  condition   String?
+  notes       String?
+  geom        Unsupported("geography(Geometry, 4326)")
+  taskGeoLinks TaskGeoLink[]
+  createdAt   DateTime                                    @default(now())
+
+  @@index([watershedId])
+  @@index([type])
+}
+
+enum ProjectStatus {
+  planning
+  active
+  on_hold
+  completed
+  cancelled
+}
+
+enum TaskStatus {
+  not_started
+  in_progress
+  blocked
+  completed
+}
+
+enum ResourceType {
+  person
+  equipment
+  material
+  labor_crew
+}
+
+enum CostCategory {
+  labor
+  materials
+  equipment
+  transport
+  overhead
+  other
+}
+
+enum GeoTargetType {
+  village
+  water_source
+  watershed
+  custom_point
+  custom_polygon
+}
+
+model Project {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  name        String
+  description String?
+  status      ProjectStatus  @default(planning)
+  startDate   DateTime?      @db.Date
+  endDate     DateTime?      @db.Date
+  actualStart DateTime?      @db.Date
+  actualEnd   DateTime?      @db.Date
+  sponsor     String?
+  budgetInr   Decimal?       @db.Decimal(14, 2)
+  createdById String?
+  createdBy   User?          @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  tasks       Task[]
+  createdAt   DateTime       @default(now())
+}
+
+model Task {
+  id             String                   @id @default(uuid())
+  code           String                   @unique
+  name           String
+  description    String?
+  projectId      String
+  project        Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentTaskId   String?
+  parent         Task?                    @relation("TaskTree", fields: [parentTaskId], references: [id])
+  children       Task[]                   @relation("TaskTree")
+  status         TaskStatus               @default(not_started)
+  startDate      DateTime?                @db.Date
+  endDate        DateTime?                @db.Date
+  actualStart    DateTime?                @db.Date
+  actualEnd      DateTime?                @db.Date
+  plannedCostInr Decimal?                 @db.Decimal(14, 2)
+  assigneeId     String?
+  assignee       User?                    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  allocations    TaskResourceAllocation[]
+  costEntries    CostEntry[]
+  geoLinks       TaskGeoLink[]
+  createdAt      DateTime                 @default(now())
+
+  @@index([projectId])
+  @@index([parentTaskId])
+}
+
+model Resource {
+  id          String                   @id @default(uuid())
+  code        String                   @unique
+  name        String
+  type        ResourceType
+  unit        String
+  rateInr     Decimal                  @db.Decimal(10, 2)
+  allocations TaskResourceAllocation[]
+  costEntries CostEntry[]
+  createdAt   DateTime                 @default(now())
+}
+
+model TaskResourceAllocation {
+  id                 String   @id @default(uuid())
+  taskId             String
+  task               Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  resourceId         String
+  resource           Resource @relation(fields: [resourceId], references: [id])
+  plannedQuantity    Decimal  @db.Decimal(12, 2)
+  plannedUnitRateInr Decimal  @db.Decimal(10, 2)
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  @@index([taskId])
+  @@index([resourceId])
+}
+
+model CostEntry {
+  id           String       @id @default(uuid())
+  taskId       String
+  task         Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  resourceId   String?
+  resource     Resource?    @relation(fields: [resourceId], references: [id])
+  entryDate    DateTime     @db.Date
+  quantity     Decimal?     @db.Decimal(12, 2)
+  unitRateInr  Decimal?     @db.Decimal(10, 2)
+  amountInr    Decimal      @db.Decimal(14, 2)
+  category     CostCategory
+  vendor       String?
+  invoiceRef   String?
+  notes        String?
+  recordedById String?
+  recordedBy   User?        @relation("CostEntryRecordedBy", fields: [recordedById], references: [id])
+  createdAt    DateTime     @default(now())
+
+  @@index([taskId])
+  @@index([entryDate])
+}
+
+model TaskGeoLink {
+  id                String                                    @id @default(uuid())
+  taskId            String
+  task              Task                                      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  targetType        GeoTargetType
+  villageId         String?
+  village           Village?                                  @relation(fields: [villageId], references: [id], onDelete: Cascade)
+  waterSourceId     String?
+  waterSource       WaterSource?                              @relation(fields: [waterSourceId], references: [id], onDelete: Cascade)
+  watershedId       String?
+  watershed         Watershed?                                @relation(fields: [watershedId], references: [id], onDelete: Cascade)
+  customGeom        Unsupported("geography(Geometry, 4326)")?
+  allocationPercent Float                                     @default(100)
+  notes             String?
+  createdAt         DateTime                                  @default(now())
+
+  @@index([taskId])
+  @@index([villageId])
+  @@index([waterSourceId])
+  @@index([watershedId])
+}
