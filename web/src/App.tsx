@@ -1,15 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./auth/AuthContext";
 import { DummyLogin } from "./auth/DummyLogin";
 import { MapView } from "./components/MapView";
 import { WatershedSidebar } from "./components/WatershedSidebar";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 import type { WatershedNode } from "./types";
 
 export function App() {
   const { t, i18n } = useTranslation();
   const { user, loading, logout } = useAuth();
   const [selectedWatershed, setSelectedWatershed] = useState<WatershedNode | null>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+
+  useEffect(() => {
+    // When viewport crosses the mobile breakpoint, reset sidebar default state.
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  function handleSelectWatershed(node: WatershedNode | null) {
+    setSelectedWatershed(node);
+    // On mobile, auto-close the sidebar after picking a watershed so the user sees the map.
+    if (isMobile) setSidebarOpen(false);
+  }
 
   if (loading) {
     return <div style={{ padding: 24, fontFamily: "system-ui" }}>{t("login.loading")}</div>;
@@ -19,22 +33,29 @@ export function App() {
 
   return (
     <div style={layout.shell}>
-      <header style={layout.header}>
-        <div>
+      <header className="pdg-header" style={layout.header}>
+        <div style={layout.brandRow}>
+          <button
+            className="pdg-hamburger"
+            onClick={() => setSidebarOpen((o) => !o)}
+            aria-label="Toggle sidebar"
+          >
+            ☰
+          </button>
           <strong style={{ color: "#1976d2" }}>{t("app.title")}</strong>
-          <span style={layout.sub}> — {t("app.subtitle")}</span>
+          <span className="pdg-tagline" style={layout.sub}> — {t("app.subtitle")}</span>
         </div>
-        <div style={layout.controls}>
-          <label style={layout.label}>{t("nav.language")}:</label>
+        <div className="pdg-header-controls" style={layout.controls}>
           <select
             value={i18n.language.startsWith("mr") ? "mr" : "en"}
             onChange={(e) => i18n.changeLanguage(e.target.value)}
             style={layout.select}
+            aria-label={t("nav.language")}
           >
             <option value="en">{t("lang.en")}</option>
             <option value="mr">{t("lang.mr")}</option>
           </select>
-          <span style={layout.userInfo}>{user.name} ({user.role})</span>
+          <span className="pdg-userinfo" style={layout.userInfo}>{user.name} ({user.role})</span>
           <button onClick={logout} style={layout.button}>{t("nav.logout")}</button>
         </div>
       </header>
@@ -42,7 +63,10 @@ export function App() {
       <main style={layout.main}>
         <WatershedSidebar
           selectedId={selectedWatershed?.id ?? null}
-          onSelect={setSelectedWatershed}
+          onSelect={handleSelectWatershed}
+          open={sidebarOpen}
+          onToggle={() => setSidebarOpen((o) => !o)}
+          isMobile={isMobile}
         />
         <div style={layout.mapWrap}>
           <MapView focusWatershedId={selectedWatershed?.id ?? null} />
@@ -69,6 +93,7 @@ const layout: Record<string, React.CSSProperties> = {
     flexWrap: "wrap",
     gap: 8,
   },
+  brandRow: { display: "flex", alignItems: "center", gap: 6 },
   sub: { color: "#666", fontSize: 13 },
   controls: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" },
   label: { fontSize: 13, color: "#555" },

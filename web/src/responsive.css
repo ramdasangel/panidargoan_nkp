@@ -1,0 +1,121 @@
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+
+/* Sidebar — desktop: side-by-side; mobile: slide-in overlay. */
+.pdg-sidebar {
+  width: 280px;
+  min-width: 240px;
+  flex-shrink: 0;
+  background: #fafafa;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  font-size: 13px;
+  transition: width 0.18s ease, transform 0.22s ease;
+  position: relative;
+}
+
+.pdg-sidebar.folded {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 0;
+}
+
+.pdg-sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 36px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 1px 0 3px rgba(0,0,0,0.08);
+}
+
+.pdg-sidebar-toggle.is-edge {
+  /* When sidebar is folded, the toggle button "pokes out" from the left edge. */
+  position: absolute;
+  left: 0;
+  right: auto;
+  border-left: 1px solid #e0e0e0;
+  border-radius: 0 4px 4px 0;
+}
+
+.pdg-backdrop { display: none; }
+
+@media (max-width: 768px) {
+  .pdg-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 80vw;
+    max-width: 320px;
+    z-index: 1500;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+  }
+  .pdg-sidebar.open { transform: translateX(0); }
+  .pdg-sidebar.folded { transform: translateX(-100%); width: 80vw; min-width: 0; }
+  .pdg-sidebar-toggle { display: none; }
+  .pdg-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1400;
+  }
+
+  /* Header gets compact on mobile */
+  .pdg-header { padding: 8px 12px; gap: 6px; }
+  .pdg-header-controls { gap: 8px; }
+  .pdg-header-controls .pdg-userinfo { display: none; }
+  .pdg-tagline { display: none; }
+
+  /* Map control panels go to bottom sheet style */
+  .pdg-add-panel {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    top: auto !important;
+    bottom: 12px !important;
+    max-height: 70vh !important;
+  }
+  .pdg-layer-toggle {
+    top: 8px !important;
+    left: 8px !important;
+    right: auto !important;
+    max-width: calc(100vw - 16px);
+  }
+  .pdg-rollup {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    top: auto !important;
+    bottom: 12px !important;
+    max-height: 70vh !important;
+  }
+}
+
+.pdg-hamburger {
+  background: none;
+  border: 0;
+  padding: 6px 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: #1976d2;
+  display: none;
+}
+@media (max-width: 768px) {
+  .pdg-hamburger { display: inline-block; }
+}

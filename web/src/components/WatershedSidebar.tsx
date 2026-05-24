@@ -7,9 +7,12 @@ import type { WatershedCostSummary, WatershedNode } from "../types";
 interface Props {
   selectedId: string | null;
   onSelect: (node: WatershedNode | null) => void;
+  open: boolean;
+  onToggle: () => void;
+  isMobile: boolean;
 }
 
-export function WatershedSidebar({ selectedId, onSelect }: Props) {
+export function WatershedSidebar({ selectedId, onSelect, open, onToggle, isMobile }: Props) {
   const { t } = useTranslation();
   const [tree, setTree] = useState<WatershedNode[] | null>(null);
   const [summaries, setSummaries] = useState<WatershedCostSummary[]>([]);
@@ -27,18 +30,38 @@ export function WatershedSidebar({ selectedId, onSelect }: Props) {
     return m;
   }, [summaries]);
 
+  const classes = ["pdg-sidebar", open ? "open" : "folded"].join(" ");
+
   return (
-    <aside style={styles.aside}>
-      <h3 style={styles.h3}>{t("watershed.title")}</h3>
-      {!tree && <p style={styles.muted}>…</p>}
-      {tree && (
-        <ul style={styles.list}>
-          {tree.map((n) => (
-            <TreeNode key={n.id} node={n} depth={0} selectedId={selectedId} onSelect={onSelect} costById={byId} />
-          ))}
-        </ul>
+    <>
+      <aside className={classes} style={styles.aside}>
+        <div style={styles.headerRow}>
+          <h3 style={styles.h3}>{t("watershed.title")}</h3>
+          {isMobile && (
+            <button onClick={onToggle} style={styles.closeBtn} aria-label="Close">×</button>
+          )}
+        </div>
+        {!tree && <p style={styles.muted}>…</p>}
+        {tree && (
+          <ul style={styles.list}>
+            {tree.map((n) => (
+              <TreeNode key={n.id} node={n} depth={0} selectedId={selectedId} onSelect={onSelect} costById={byId} />
+            ))}
+          </ul>
+        )}
+      </aside>
+      {!isMobile && (
+        <button
+          className={`pdg-sidebar-toggle ${open ? "" : "is-edge"}`}
+          onClick={onToggle}
+          aria-label={open ? "Fold sidebar" : "Unfold sidebar"}
+          title={open ? "Fold sidebar" : "Unfold sidebar"}
+        >
+          {open ? "‹" : "›"}
+        </button>
       )}
-    </aside>
+      {isMobile && open && <div className="pdg-backdrop" onClick={onToggle} />}
+    </>
   );
 }
 
@@ -102,16 +125,10 @@ function TreeNode({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  aside: {
-    width: 280,
-    minWidth: 240,
-    background: "#fafafa",
-    borderRight: "1px solid #e0e0e0",
-    padding: "12px 0",
-    overflowY: "auto",
-    fontSize: 13,
-  },
-  h3: { margin: "0 12px 8px", fontSize: 14, color: "#333" },
+  aside: { padding: "12px 0" },
+  headerRow: { display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 12px 4px" },
+  h3: { margin: 0, fontSize: 14, color: "#333" },
+  closeBtn: { background: "none", border: 0, fontSize: 22, color: "#888", cursor: "pointer", padding: "0 6px", lineHeight: 1 },
   muted: { color: "#888", margin: "0 12px" },
   list: { listStyle: "none", margin: 0, padding: 0 },
   row: {
