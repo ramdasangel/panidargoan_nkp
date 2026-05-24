@@ -24,7 +24,7 @@ export function CostRollupPanel({ watershedId, onClose, onOpenProject }: Props) 
   if (!data) return <div style={styles.panel}>{t("map.loading")}</div>;
 
   return (
-    <div style={styles.panel}>
+    <div className="pdg-rollup" style={styles.panel}>
       <button onClick={onClose} style={styles.close} aria-label="Close">×</button>
       <div style={styles.heading}>
         <strong>{data.watershed.name}</strong>

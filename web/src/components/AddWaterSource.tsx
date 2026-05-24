@@ -177,7 +177,7 @@ export function AddWaterSourcePanel({ state, setState, onSaved }: Props) {
   }
 
   return (
-    <div style={styles.panel}>
+    <div className="pdg-add-panel" style={styles.panel}>
       <div style={styles.header}>
         <strong>{t("addWS.title")}</strong>
         <button onClick={cancel} style={styles.close} aria-label="Close">×</button>

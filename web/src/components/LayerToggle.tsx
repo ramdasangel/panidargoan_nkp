@@ -17,7 +17,7 @@ export function LayerToggle({ layers, onChange, onAddWaterSource }: Props) {
   ];
 
   return (
-    <div style={styles.box}>
+    <div className="pdg-layer-toggle" style={styles.box}>
       <strong style={styles.heading}>{t("map.layers")}</strong>
       {overlays.map(([key, label]) => (
         <label key={key} style={styles.row}>
