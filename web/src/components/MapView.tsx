@@ -13,16 +13,6 @@ interface Props {
   focusWatershedId: string | null;
 }
 
-interface VillageProps {
-  id: string;
-  code: string;
-  name: string;
-  population?: number | null;
-  cattleCount?: number | null;
-  sheepGoatCount?: number | null;
-  avgSlopePercent?: number | null;
-}
-
 interface WaterSourceProps {
   id: string;
   code: string;
@@ -72,6 +62,8 @@ export function MapView({ focusWatershedId }: Props) {
     return <p style={{ padding: 16 }}>{t("map.loading")}</p>;
   }
 
+  const adding = addState !== null;
+
   return (
     <div style={{ position: "relative", height: "100%" }}>
       <LayerToggle
@@ -102,8 +94,9 @@ export function MapView({ focusWatershedId }: Props) {
 
         {layers.watersheds && (
           <GeoJSON
-            key={`ws-${focusWatershedId ?? "all"}`}
+            key={`ws-${focusWatershedId ?? "all"}-${adding ? "draw" : "view"}`}
             data={watersheds}
+            interactive={!adding}
             style={(feature) => {
               const isFocused = focusWatershedId && (feature?.properties as { id: string }).id === focusWatershedId;
               const lvl = (feature?.properties as { level: number }).level;
@@ -116,6 +109,7 @@ export function MapView({ focusWatershedId }: Props) {
               };
             }}
             onEachFeature={(feature, layer) => {
+              if (adding) return;
               const p = feature.properties as { name: string; kind: string; areaKm2: number | null };
               const kind = t(`watershed.kind_${p.kind}`, { defaultValue: p.kind });
               layer.bindPopup(
@@ -130,6 +124,7 @@ export function MapView({ focusWatershedId }: Props) {
         {layers.talukas && (
           <GeoJSON
             data={talukas}
+            interactive={false}
             style={{ color: "#1976d2", weight: 2, fillOpacity: 0, dashArray: "4 4" }}
           />
         )}
@@ -137,22 +132,12 @@ export function MapView({ focusWatershedId }: Props) {
         {layers.villages && (
           <GeoJSON
             data={villages}
+            interactive={false}
             style={{ color: "#2e7d32", weight: 1, fillColor: "#66bb6a", fillOpacity: 0.2 }}
-            onEachFeature={(feature, layer) => {
-              const p = feature.properties as VillageProps;
-              layer.bindPopup(
-                `<strong>${p.name}</strong><br/>` +
-                  `<small>${p.code}</small><br/>` +
-                  `${t("map.population")}: ${p.population ?? "—"}<br/>` +
-                  `${t("map.cattle")}: ${p.cattleCount ?? "—"}<br/>` +
-                  `${t("map.sheepGoat")}: ${p.sheepGoatCount ?? "—"}<br/>` +
-                  `${t("map.slope")}: ${p.avgSlopePercent ?? "—"}${t("map.slopeUnit")}`
-              );
-            }}
           />
         )}
 
-        {layers.waterSources && <WaterSourcesLayer data={waterSources} />}
+        {layers.waterSources && <WaterSourcesLayer data={waterSources} interactive={!adding} />}
 
         {addState && <AddWaterSourceLayer state={addState} setState={setAddState} onSaved={() => setRefreshTick((n) => n + 1)} />}
 
@@ -162,7 +147,7 @@ export function MapView({ focusWatershedId }: Props) {
   );
 }
 
-function WaterSourcesLayer({ data }: { data: FeatureCollection }) {
+function WaterSourcesLayer({ data, interactive }: { data: FeatureCollection; interactive: boolean }) {
   const { t } = useTranslation();
 
   const points = data.features.filter((f) => f.geometry?.type === "Point");
@@ -183,21 +168,29 @@ function WaterSourcesLayer({ data }: { data: FeatureCollection }) {
     <>
       {lines.length > 0 && (
         <GeoJSON
-          key={`ws-lines-${lines.length}`}
+          key={`ws-lines-${lines.length}-${interactive ? "i" : "n"}`}
           data={{ type: "FeatureCollection", features: lines } as FeatureCollection}
+          interactive={interactive}
           style={(f) => ({ color: WATER_SOURCE_COLOR[(f?.properties as WaterSourceProps).type], weight: 2 })}
-          onEachFeature={(f, layer) => layer.bindPopup(popup(f.properties as WaterSourceProps))}
+          onEachFeature={(f, layer) => {
+            if (!interactive) return;
+            layer.bindPopup(popup(f.properties as WaterSourceProps));
+          }}
         />
       )}
       {polys.length > 0 && (
         <GeoJSON
-          key={`ws-polys-${polys.length}`}
+          key={`ws-polys-${polys.length}-${interactive ? "i" : "n"}`}
           data={{ type: "FeatureCollection", features: polys } as FeatureCollection}
+          interactive={interactive}
           style={(f) => {
             const c = WATER_SOURCE_COLOR[(f?.properties as WaterSourceProps).type];
             return { color: c, weight: 1, fillColor: c, fillOpacity: 0.45 };
           }}
-          onEachFeature={(f, layer) => layer.bindPopup(popup(f.properties as WaterSourceProps))}
+          onEachFeature={(f, layer) => {
+            if (!interactive) return;
+            layer.bindPopup(popup(f.properties as WaterSourceProps));
+          }}
         />
       )}
       {points.map((f) => {
@@ -206,11 +199,12 @@ function WaterSourcesLayer({ data }: { data: FeatureCollection }) {
         const color = WATER_SOURCE_COLOR[p.type];
         return (
           <CircleMarker
-            key={p.id}
+            key={`${p.id}-${interactive ? "i" : "n"}`}
             center={[lat, lng]}
             radius={7}
+            interactive={interactive}
             pathOptions={{ color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.9 }}
-            eventHandlers={{ add: (e) => e.target.bindPopup(popup(p)) }}
+            eventHandlers={interactive ? { add: (e) => e.target.bindPopup(popup(p)) } : undefined}
           />
         );
       })}
