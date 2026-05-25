@@ -1,0 +1,14 @@
+{
+    # Email for Let's Encrypt account notifications (cert expiry warnings).
+    email ramdasangel@gmail.com
+}
+
+panidargoan.harhargange.net {
+    encode gzip
+    # Trust Caddy as the TLS-terminating proxy; forward client info.
+    reverse_proxy web:80 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-Host {host}
+        header_up X-Real-IP {remote_host}
+    }
+}

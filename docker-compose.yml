@@ -65,11 +65,33 @@ services:
     container_name: panidargoan-web
     profiles: ["app"]
     ports:
+      # Direct HTTP access — useful for local testing and as a fallback.
+      # Production traffic comes through caddy on 80/443 instead.
       - "8080:80"
     depends_on:
       - api
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: panidargoan-caddy
+    # Only run in deployments that need HTTPS — typically on the cloud server.
+    # Use:  docker compose --profile app --profile https up -d
+    profiles: ["https"]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
+  caddy_data:
+  caddy_config:
