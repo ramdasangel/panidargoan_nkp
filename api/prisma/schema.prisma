@@ -17,15 +17,16 @@ enum Role {
 }
 
 model User {
-  id                  String       @id @default(uuid())
-  email               String       @unique
+  id                  String             @id @default(uuid())
+  email               String             @unique
   name                String
   role                Role
-  googleSub           String?      @unique
-  createdProjects     Project[]    @relation("ProjectCreatedBy")
-  assignedTasks       Task[]       @relation("TaskAssignee")
-  recordedCostEntries CostEntry[]  @relation("CostEntryRecordedBy")
-  createdAt           DateTime     @default(now())
+  googleSub           String?            @unique
+  createdProjects     Project[]          @relation("ProjectCreatedBy")
+  assignedTasks       Task[]             @relation("TaskAssignee")
+  recordedCostEntries CostEntry[]        @relation("CostEntryRecordedBy")
+  waterSourceLogs     WaterSourceLog[]   @relation("WaterSourceLogLoggedBy")
+  createdAt           DateTime           @default(now())
 }
 
 model Country {
@@ -144,11 +145,35 @@ model WaterSource {
   geom        Unsupported("geography(Geometry, 4326)")
   kml         String?
   taskGeoLinks TaskGeoLink[]
+  logs        WaterSourceLog[]
   createdAt   DateTime                                    @default(now())
 
   @@index([watershedId])
   @@index([type])
   @@index([source])
+}
+
+model WaterSourceLog {
+  id            String      @id @default(uuid())
+  waterSourceId String
+  waterSource   WaterSource @relation(fields: [waterSourceId], references: [id], onDelete: Cascade)
+  loggedAt      DateTime    @default(now())
+  loggedById    String?
+  loggedBy      User?       @relation("WaterSourceLogLoggedBy", fields: [loggedById], references: [id])
+
+  flowM3PerDay  Float?
+  waterLevelCm  Float?
+  phLevel       Float?
+  tdsPpm        Float?
+  turbidityNtu  Float?
+  temperatureC  Float?
+  condition     String?
+  notes         String?
+
+  createdAt     DateTime    @default(now())
+
+  @@index([waterSourceId])
+  @@index([loggedAt(sort: Desc)])
 }
 
 enum ProjectStatus {

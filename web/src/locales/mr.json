@@ -75,6 +75,26 @@
     "pointsCount": "{{count}} बिंदू",
     "clearPoints": "बिंदू पुसा"
   },
+  "wsDetail": {
+    "master": "स्रोत",
+    "logs": "नोंदी ({{count}})",
+    "edit": "संपादन",
+    "update": "अद्ययावत",
+    "addLog": "नोंद जोडा",
+    "saveLog": "नोंद साठवा",
+    "loggedAt": "नोंद वेळ",
+    "flow": "प्रवाह",
+    "flowShort": "प्रवाह",
+    "waterLevel": "पाणी पातळी",
+    "levelShort": "पातळी",
+    "ph": "pH",
+    "tds": "TDS",
+    "turbidity": "गढूळपणा",
+    "temperature": "तापमान",
+    "condShort": "स्थिती",
+    "noLogs": "अद्याप नोंद नाही. निरीक्षण नोंदवण्यासाठी 'नोंद जोडा' वापरा.",
+    "confirmDeleteLog": "ही नोंद हटवायची?"
+  },
   "search": {
     "placeholder": "गाव किंवा तालुका शोधा…",
     "noResults": "जुळणी सापडली नाही",
