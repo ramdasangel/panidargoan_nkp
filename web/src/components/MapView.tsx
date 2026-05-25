@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/client";
 import { AddWaterSourceLayer, AddWaterSourcePanel, type AddState } from "./AddWaterSource";
 import { LocationSearch, type LocationFocus } from "./LocationSearch";
+import { WaterSourceDetail } from "./WaterSourceDetail";
 import type { MapLayers, WaterSourceType } from "../types";
 
 interface Props {
@@ -25,6 +26,8 @@ interface WaterSourceProps {
   capacityM3?: number | null;
   depthM?: number | null;
   condition?: string | null;
+  centroidLat?: number;
+  centroidLng?: number;
 }
 
 const WATER_SOURCE_COLOR: Record<WaterSourceType, string> = {
@@ -45,6 +48,7 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
   const [pointFocus, setPointFocus] = useState<LocationFocus | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [devicePending, setDevicePending] = useState(false);
+  const [openDetailId, setOpenDetailId] = useState<string | null>(null);
 
   function centerOnDevice() {
     if (!navigator.geolocation) {
@@ -101,6 +105,13 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
           state={addState}
           setState={setAddState}
           onSaved={() => setRefreshTick((n) => n + 1)}
+        />
+      )}
+      {openDetailId && !addState && (
+        <WaterSourceDetail
+          waterSourceId={openDetailId}
+          onClose={() => setOpenDetailId(null)}
+          onUpdated={() => setRefreshTick((n) => n + 1)}
         />
       )}
       <MapContainer center={[19.0, 74.1]} zoom={10} style={{ height: "100%", width: "100%" }}>
@@ -168,6 +179,29 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
             interactive={!adding}
           />
         )}
+
+        {/* Centroid markers for manually-mapped sources — click opens master/detail panel. */}
+        {layers.waterSourcesManual && !adding && waterSources.features
+          .filter((f) => (f.properties as WaterSourceProps).source === "manual")
+          .map((f) => {
+            const p = f.properties as WaterSourceProps;
+            if (p.centroidLat == null || p.centroidLng == null) return null;
+            return (
+              <CircleMarker
+                key={`centroid-${p.id}`}
+                center={[p.centroidLat, p.centroidLng]}
+                radius={9}
+                pathOptions={{
+                  color: "#fff",
+                  weight: 2,
+                  fillColor: "#ff9800",
+                  fillOpacity: 1,
+                  className: "pdg-manual-centroid",
+                }}
+                eventHandlers={{ click: () => setOpenDetailId(p.id) }}
+              />
+            );
+          })}
 
         {addState && <AddWaterSourceLayer state={addState} setState={setAddState} onSaved={() => setRefreshTick((n) => n + 1)} />}
 

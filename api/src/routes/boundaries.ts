@@ -134,13 +134,16 @@ boundariesRouter.get("/water-sources", async (req, res) => {
   const rows = await prisma.$queryRawUnsafe<
     Array<{
       id: string; code: string; name: string; type: string; source: string; watershed_id: string | null;
-      capacity_m3: number | null; depth_m: number | null; condition: string | null; geom: string;
+      capacity_m3: number | null; depth_m: number | null; condition: string | null;
+      geom: string; centroid_lat: number; centroid_lng: number;
     }>
   >(
     `SELECT id, code, name, type::text AS type, source::text AS source,
             "watershedId" AS watershed_id,
             "capacityM3" AS capacity_m3, "depthM" AS depth_m, condition,
-            ST_AsGeoJSON(geom)::text AS geom
+            ST_AsGeoJSON(geom)::text AS geom,
+            ST_Y(ST_Centroid(geom::geometry)) AS centroid_lat,
+            ST_X(ST_Centroid(geom::geometry)) AS centroid_lng
        FROM "WaterSource"
        WHERE ($1::text IS NULL OR "watershedId" = $1)`,
     watershedId
@@ -153,6 +156,7 @@ boundariesRouter.get("/water-sources", async (req, res) => {
       id: r.id, code: r.code, name: r.name, type: r.type, source: r.source,
       watershedId: r.watershed_id, capacityM3: r.capacity_m3,
       depthM: r.depth_m, condition: r.condition,
+      centroidLat: r.centroid_lat, centroidLng: r.centroid_lng,
     },
   }));
 

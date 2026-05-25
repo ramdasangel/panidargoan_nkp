@@ -75,6 +75,26 @@
     "pointsCount": "{{count}} point(s)",
     "clearPoints": "Clear points"
   },
+  "wsDetail": {
+    "master": "Source",
+    "logs": "Log entries ({{count}})",
+    "edit": "Edit",
+    "update": "Update",
+    "addLog": "Add log",
+    "saveLog": "Save log",
+    "loggedAt": "Logged at",
+    "flow": "Discharge / flow",
+    "flowShort": "Flow",
+    "waterLevel": "Water level",
+    "levelShort": "Level",
+    "ph": "pH",
+    "tds": "TDS",
+    "turbidity": "Turbidity",
+    "temperature": "Temperature",
+    "condShort": "cond.",
+    "noLogs": "No log entries yet. Use 'Add log' to record observations.",
+    "confirmDeleteLog": "Delete this log entry?"
+  },
   "search": {
     "placeholder": "Search village or taluka…",
     "noResults": "No matches",
