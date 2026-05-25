@@ -182,6 +182,10 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
 }
 .pdg-search-spinner-dark { border-color: rgba(255,255,255,0.4); border-top-color: #fff; position: static; }
 @keyframes pdg-spin { to { transform: rotate(360deg); } }
+@keyframes pdg-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.4); }
+}
 
 .pdg-search-center {
   width: 38px;
