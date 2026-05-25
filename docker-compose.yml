@@ -45,6 +45,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       AUTH_MODE: ${AUTH_MODE:-dummy}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       API_PORT: 3000
     ports:
       - "3000:3000"

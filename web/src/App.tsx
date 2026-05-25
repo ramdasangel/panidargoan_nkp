@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./auth/AuthContext";
-import { DummyLogin } from "./auth/DummyLogin";
+import { Login } from "./auth/Login";
 import { MapView } from "./components/MapView";
 import { Sidebar } from "./components/Sidebar";
 import { emptyState, type AddState } from "./components/AddWaterSource";
@@ -29,7 +29,7 @@ export function App() {
     return <div style={{ padding: 24, fontFamily: "system-ui" }}>{t("login.loading")}</div>;
   }
 
-  if (!user) return <DummyLogin />;
+  if (!user) return <Login />;
 
   return (
     <div style={layout.shell}>

@@ -8,3 +8,4 @@ build/
 .vite/
 coverage/
 pgdata/
+client_secret_*.json
