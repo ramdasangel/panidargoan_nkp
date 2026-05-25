@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/client";
 import { AddWaterSourceLayer, AddWaterSourcePanel, type AddState } from "./AddWaterSource";
+import { LocationSearch, type LocationFocus } from "./LocationSearch";
 import type { MapLayers, WaterSourceType } from "../types";
 
 interface Props {
@@ -40,6 +41,31 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
   const [watersheds, setWatersheds] = useState<FeatureCollection | null>(null);
   const [waterSources, setWaterSources] = useState<FeatureCollection | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [pointFocus, setPointFocus] = useState<LocationFocus | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [devicePending, setDevicePending] = useState(false);
+
+  function centerOnDevice() {
+    if (!navigator.geolocation) {
+      alert(t("search.geoUnavailable"));
+      return;
+    }
+    setDevicePending(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLocation([lat, lng]);
+        setPointFocus({ lat, lng, zoom: 17 });
+        setDevicePending(false);
+      },
+      (err) => {
+        setDevicePending(false);
+        alert(t("search.geoFailed") + ": " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
 
   useEffect(() => {
     api<FeatureCollection>("/api/boundaries/villages").then(setVillages).catch(console.error);
@@ -64,6 +90,11 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
 
   return (
     <div style={{ position: "relative", height: "100%" }}>
+      <LocationSearch
+        onLocate={setPointFocus}
+        onCenterDevice={centerOnDevice}
+        devicePending={devicePending}
+      />
       {addState && (
         <AddWaterSourcePanel
           state={addState}
@@ -134,10 +165,42 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
 
         {addState && <AddWaterSourceLayer state={addState} setState={setAddState} onSaved={() => setRefreshTick((n) => n + 1)} />}
 
+        {userLocation && (
+          <>
+            <CircleMarker
+              center={userLocation}
+              radius={9}
+              interactive={false}
+              pathOptions={{ color: "#fff", weight: 3, fillColor: "#1976d2", fillOpacity: 0.95 }}
+            />
+            <CircleMarker
+              center={userLocation}
+              radius={22}
+              interactive={false}
+              pathOptions={{ color: "#1976d2", weight: 1, fillColor: "#1976d2", fillOpacity: 0.12 }}
+            />
+          </>
+        )}
+
         <FlyTo feature={focused} />
+        <FlyToPoint focus={pointFocus} />
       </MapContainer>
     </div>
   );
+}
+
+function FlyToPoint({ focus }: { focus: LocationFocus | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focus) return;
+    if (focus.bbox) {
+      const [s, w, n, e] = focus.bbox;
+      map.flyToBounds([[s, w], [n, e]], { padding: [40, 40], duration: 0.6, maxZoom: 16 });
+    } else {
+      map.flyTo([focus.lat, focus.lng], focus.zoom, { duration: 0.6 });
+    }
+  }, [focus, map]);
+  return null;
 }
 
 function WaterSourcesLayer({ data, interactive }: { data: FeatureCollection; interactive: boolean }) {
