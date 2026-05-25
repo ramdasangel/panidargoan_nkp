@@ -12,7 +12,10 @@ waterSourceLogsRouter.get("/", async (req, res) => {
     where: { waterSourceId },
     orderBy: { loggedAt: "desc" },
     take: 200,
-    include: { loggedBy: { select: { id: true, email: true, name: true } } },
+    include: {
+      loggedBy:    { select: { id: true, email: true, name: true } },
+      attachments: { select: { id: true, url: true, filename: true, mimeType: true, sizeBytes: true, createdAt: true } },
+    },
   });
   res.json(logs);
 });
