@@ -233,7 +233,12 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
   max-width: calc(100vw - 24px);
   bottom: auto !important;
   max-height: none !important;
-  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e3f2fd;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(216, 27, 96, 0.2), 0 2px 8px rgba(0,0,0,0.12);
+  z-index: 1100;
+  overflow: visible;
 }
 
 @media (max-width: 768px) {
