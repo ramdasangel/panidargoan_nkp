@@ -9,6 +9,7 @@ import { watershedsRouter } from "./routes/watersheds.js";
 import { waterSourcesRouter } from "./routes/waterSources.js";
 import { projectsRouter } from "./routes/projects.js";
 import { reportsRouter } from "./routes/reports.js";
+import { usersRouter } from "./routes/users.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/watersheds", watershedsRouter);
 app.use("/api/water-sources", waterSourcesRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/users", usersRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

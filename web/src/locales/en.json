@@ -71,7 +71,25 @@
   "sidebar": {
     "menu": "Menu",
     "actions": "Actions",
+    "admin": "Admin",
     "inProgress": "in progress"
+  },
+  "users": {
+    "title": "User management",
+    "manageUsers": "Manage users",
+    "emailPh": "email@example.com",
+    "namePh": "Display name (optional)",
+    "add": "Add",
+    "addHint": "New users sign in with Google later — the role you set here is preserved on first sign-in.",
+    "delete": "Delete",
+    "confirmDelete": "Delete {{email}}? This cannot be undone.",
+    "cantDeleteSelf": "You cannot delete your own account",
+    "you": "you",
+    "noneInRole": "No users in this role yet.",
+    "role_admin": "Admins",
+    "role_project_manager": "Project managers",
+    "role_field_user": "Field users",
+    "role_viewer": "Viewers"
   },
   "watershed": {
     "title": "Watersheds",
