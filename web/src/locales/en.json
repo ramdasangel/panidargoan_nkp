@@ -44,6 +44,9 @@
     "groupPolygon": "Areas (ponds, tanks)",
     "tabDraw": "Draw on map",
     "tabKml": "Paste / upload KML",
+    "verticesShort": "pts",
+    "expand": "Expand panel",
+    "collapse": "Collapse panel (see map)",
     "kmlPlaceholder": "Paste the contents of a .kml file here…",
     "uploadKml": "Upload .kml",
     "applyKml": "Apply KML",
@@ -67,6 +70,14 @@
     "clickPolygon": "Click on the map to outline the polygon ({{count}} corners so far).",
     "pointsCount": "{{count}} point(s)",
     "clearPoints": "Clear points"
+  },
+  "search": {
+    "placeholder": "Search village or taluka…",
+    "noResults": "No matches",
+    "center": "My location",
+    "centerTitle": "Center map on my location",
+    "geoUnavailable": "Geolocation is not supported in this browser.",
+    "geoFailed": "Could not get your location"
   },
   "sidebar": {
     "menu": "Menu",

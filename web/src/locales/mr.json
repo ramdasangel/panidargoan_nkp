@@ -44,6 +44,9 @@
     "groupPolygon": "क्षेत्र (तलाव, टाकी)",
     "tabDraw": "नकाशावर काढा",
     "tabKml": "KML चिकटवा / अपलोड करा",
+    "verticesShort": "बिंदू",
+    "expand": "विस्तार करा",
+    "collapse": "लहान करा (नकाशा पाहा)",
     "kmlPlaceholder": "येथे .kml फाईलमधील मजकूर चिकटवा…",
     "uploadKml": ".kml अपलोड करा",
     "applyKml": "KML लागू करा",
@@ -67,6 +70,14 @@
     "clickPolygon": "बहुभुजासाठी कोपरे क्लिक करा ({{count}} पर्यंत).",
     "pointsCount": "{{count}} बिंदू",
     "clearPoints": "बिंदू पुसा"
+  },
+  "search": {
+    "placeholder": "गाव किंवा तालुका शोधा…",
+    "noResults": "जुळणी सापडली नाही",
+    "center": "माझे ठिकाण",
+    "centerTitle": "नकाशा माझ्या ठिकाणावर केंद्रित करा",
+    "geoUnavailable": "या ब्राउझरमध्ये Geolocation समर्थित नाही.",
+    "geoFailed": "तुमचे ठिकाण मिळवू शकलो नाही"
   },
   "sidebar": {
     "menu": "मेनू",

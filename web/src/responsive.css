@@ -131,7 +131,126 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
 .pdg-menu-action-secondary { background: #fff; color: #555; border: 1px solid #ddd; }
 .pdg-menu-action-secondary:hover { background: #f5f5f5; color: #333; }
 
+/* ---------- Location search (top-center of map) ---------- */
+.pdg-search {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+}
+.pdg-search-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pdg-search-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.pdg-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  pointer-events: none;
+}
+.pdg-search-input {
+  width: 100%;
+  padding: 8px 36px 8px 32px;
+  font-size: 13px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border-radius: 6px;
+}
+.pdg-search-spinner {
+  position: absolute;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ccc;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: pdg-spin 0.7s linear infinite;
+}
+.pdg-search-spinner-dark { border-color: rgba(255,255,255,0.4); border-top-color: #fff; position: static; }
+@keyframes pdg-spin { to { transform: rotate(360deg); } }
+
+.pdg-search-center {
+  width: 38px;
+  height: 38px;
+  background: #fff;
+  color: #1976d2;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pdg-search-center:hover { background: #e3f2fd; }
+.pdg-search-center:disabled { color: #ccc; cursor: not-allowed; }
+
+.pdg-search-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 4px 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.pdg-search-empty { padding: 10px 14px; color: #888; font-size: 13px; }
+.pdg-search-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.pdg-search-item:hover, .pdg-search-item.highlight { background: #e3f2fd; }
+.pdg-search-item-main { font-size: 13px; color: #222; }
+.pdg-search-item-sub { font-size: 11px; color: #888; margin-top: 1px; text-transform: capitalize; }
+
+/* ---------- Collapsed Add Water Source bar ---------- */
+.pdg-add-collapsed {
+  position: absolute;
+  top: 60px !important;
+  left: 12px !important;
+  right: auto !important;
+  width: 340px !important;
+  max-width: calc(100vw - 24px);
+  bottom: auto !important;
+  max-height: none !important;
+  border-radius: 6px;
+}
+
 @media (max-width: 768px) {
+  .pdg-search {
+    top: 8px;
+    width: calc(100vw - 16px);
+  }
+  .pdg-search-row { gap: 4px; }
+  .pdg-search-input { padding: 8px 30px 8px 30px; }
+
+  .pdg-add-panel:not(.pdg-add-collapsed) {
+    top: 64px !important;
+  }
+  .pdg-add-collapsed {
+    top: auto !important;
+    bottom: 12px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+  }
+
   .pdg-user-modal {
     max-width: 100% !important;
     max-height: 100vh !important;

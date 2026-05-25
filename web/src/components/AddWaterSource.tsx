@@ -23,6 +23,7 @@ export interface AddState {
   inputMode: "draw" | "kml";
   saving: boolean;
   error: string | null;
+  collapsed: boolean;
 }
 
 const POINT_TYPES: WaterSourceType[]   = ["well", "borewell", "check_dam", "bandhara", "kt_weir", "spring", "other"];
@@ -45,6 +46,7 @@ export function emptyState(t: WaterSourceType = "well"): AddState {
     inputMode: "draw",
     saving: false,
     error: null,
+    collapsed: false,
   };
 }
 
@@ -231,11 +233,45 @@ export function AddWaterSourcePanel({ state, setState, onSaved }: Props) {
     }
   }
 
+  if (state.collapsed) {
+    return (
+      <div className="pdg-add-panel pdg-add-collapsed">
+        <div style={styles.collapsedBar}>
+          <strong style={{ fontSize: 13 }}>{t("addWS.title")}</strong>
+          <span style={styles.collapsedMeta}>
+            {t(`waterSource.type_${state.type}`)} · {state.points.length} {t("addWS.verticesShort")}
+          </span>
+          <button
+            onClick={() => setState({ ...state, collapsed: false })}
+            style={styles.collapsedExpand}
+            aria-label={t("addWS.expand")}
+            title={t("addWS.expand")}
+            type="button"
+          >
+            ⤢
+          </button>
+          <button onClick={cancel} style={styles.close} aria-label="Close" type="button">×</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pdg-add-panel" style={styles.panel}>
       <div style={styles.header}>
         <strong>{t("addWS.title")}</strong>
-        <button onClick={cancel} style={styles.close} aria-label="Close">×</button>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={() => setState({ ...state, collapsed: true })}
+            style={styles.headerIconBtn}
+            aria-label={t("addWS.collapse")}
+            title={t("addWS.collapse")}
+            type="button"
+          >
+            ⤡
+          </button>
+          <button onClick={cancel} style={styles.close} aria-label="Close" type="button">×</button>
+        </div>
       </div>
 
       <div style={styles.section}>
@@ -415,7 +451,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
   },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid #eee", position: "sticky", top: 0, background: "#fff", zIndex: 1 },
+  headerIconBtn: { background: "none", border: 0, fontSize: 16, color: "#888", cursor: "pointer", lineHeight: 1, padding: "2px 6px" },
   close: { background: "none", border: 0, fontSize: 22, color: "#888", cursor: "pointer", lineHeight: 1 },
+  collapsedBar: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px" },
+  collapsedMeta: { flex: 1, fontSize: 12, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  collapsedExpand: { background: "#1976d2", color: "#fff", border: 0, borderRadius: 4, padding: "4px 8px", fontSize: 14, cursor: "pointer", lineHeight: 1 },
   section: { padding: "10px 14px", borderBottom: "1px solid #f4f4f4" },
   label: { display: "block", fontSize: 11, color: "#666", marginTop: 8, marginBottom: 2, textTransform: "uppercase", letterSpacing: 0.4 },
   select: { width: "100%", padding: "6px 8px", fontSize: 13, border: "1px solid #ccc", borderRadius: 4, background: "#fff" },
