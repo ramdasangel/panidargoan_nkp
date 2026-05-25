@@ -135,6 +135,7 @@ model WaterSource {
   condition   String?
   notes       String?
   geom        Unsupported("geography(Geometry, 4326)")
+  kml         String?
   taskGeoLinks TaskGeoLink[]
   createdAt   DateTime                                    @default(now())
 

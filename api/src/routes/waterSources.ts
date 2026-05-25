@@ -39,6 +39,7 @@ const createSchema = z.object({
   condition: z.string().max(80).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   geometry: geometrySchema,
+  kml: z.string().max(200000).optional().nullable(),
 });
 
 async function findContainingWatershedId(geomGeoJson: object): Promise<string | null> {
@@ -71,7 +72,7 @@ waterSourcesRouter.get("/:id", async (req, res) => {
     where: { id: req.params.id },
     select: {
       id: true, code: true, name: true, type: true, watershedId: true,
-      capacityM3: true, depthM: true, condition: true, notes: true,
+      capacityM3: true, depthM: true, condition: true, notes: true, kml: true,
     },
   });
   if (!item) return res.status(404).json({ error: "Water source not found" });
@@ -85,15 +86,16 @@ waterSourcesRouter.post("/", requireRole("admin", "project_manager", "field_user
 
   const watershedId = p.watershedId ?? (await findContainingWatershedId(p.geometry));
   const code = p.code ?? `USR-${Date.now().toString(36).toUpperCase()}`;
+  const kml = p.kml ?? geometryToKml(p.geometry, p.name);
 
   const rows = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
-    `INSERT INTO "WaterSource" (code, name, type, "watershedId", "capacityM3", "depthM", condition, notes, geom)
+    `INSERT INTO "WaterSource" (code, name, type, "watershedId", "capacityM3", "depthM", condition, notes, geom, kml)
      VALUES ($1, $2, $3::"WaterSourceType", $4, $5, $6, $7, $8,
-             ST_SetSRID(ST_GeomFromGeoJSON($9), 4326)::geography)
+             ST_SetSRID(ST_GeomFromGeoJSON($9), 4326)::geography, $10)
      RETURNING id`,
     code, p.name, p.type, watershedId,
     p.capacityM3 ?? null, p.depthM ?? null, p.condition ?? null, p.notes ?? null,
-    JSON.stringify(p.geometry)
+    JSON.stringify(p.geometry), kml
   );
 
   await invalidate("boundaries:water-sources:*");
@@ -101,6 +103,27 @@ waterSourcesRouter.post("/", requireRole("admin", "project_manager", "field_user
 
   res.status(201).json({ id: rows[0]?.id, code, watershedId });
 });
+
+// Build a minimal KML from a GeoJSON geometry. Used server-side when the
+// client didn't supply one (i.e., the user drew points instead of pasting KML).
+function geometryToKml(g: z.infer<typeof geometrySchema>, name: string): string {
+  const esc = (s: string) => s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
+  const coordStr = (pts: Array<[number, number]>) =>
+    pts.map(([lng, lat]) => `${lng},${lat},0`).join(" ");
+  let inner: string;
+  if (g.type === "Point") {
+    inner = `<Point><coordinates>${g.coordinates[0]},${g.coordinates[1]},0</coordinates></Point>`;
+  } else if (g.type === "LineString") {
+    inner = `<LineString><coordinates>${coordStr(g.coordinates)}</coordinates></LineString>`;
+  } else {
+    const ring = g.coordinates[0];
+    inner = `<Polygon><outerBoundaryIs><LinearRing><coordinates>${coordStr(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Placemark><name>${esc(name)}</name>${inner}</Placemark>
+</kml>`;
+}
 
 const updateSchema = createSchema.partial().extend({ geometry: geometrySchema.optional() });
 
@@ -123,6 +146,7 @@ waterSourcesRouter.put("/:id", requireRole("admin", "project_manager", "field_us
       ...(p.depthM !== undefined ? { depthM: p.depthM } : {}),
       ...(p.condition !== undefined ? { condition: p.condition } : {}),
       ...(p.notes !== undefined ? { notes: p.notes } : {}),
+      ...(p.kml !== undefined ? { kml: p.kml } : {}),
     },
   });
 

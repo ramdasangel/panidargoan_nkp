@@ -1,9 +1,9 @@
 html, body, #root { margin: 0; padding: 0; height: 100%; }
 
-/* Sidebar — desktop: side-by-side; mobile: slide-in overlay. */
+/* ===== Sidebar shell ===== */
 .pdg-sidebar {
-  width: 280px;
-  min-width: 240px;
+  width: 300px;
+  min-width: 260px;
   flex-shrink: 0;
   background: #fafafa;
   border-right: 1px solid #e0e0e0;
@@ -12,13 +12,26 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
   transition: width 0.18s ease, transform 0.22s ease;
   position: relative;
 }
-
 .pdg-sidebar.folded {
   width: 0;
   min-width: 0;
   overflow: hidden;
   border-right: 0;
 }
+
+.pdg-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 6px;
+  font-size: 13px;
+  color: #555;
+  position: sticky;
+  top: 0;
+  background: #fafafa;
+  z-index: 2;
+}
+.pdg-sidebar-close { background: none; border: 0; font-size: 22px; color: #888; cursor: pointer; padding: 0 6px; line-height: 1; }
 
 .pdg-sidebar-toggle {
   position: absolute;
@@ -40,9 +53,7 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
   justify-content: center;
   box-shadow: 1px 0 3px rgba(0,0,0,0.08);
 }
-
 .pdg-sidebar-toggle.is-edge {
-  /* When sidebar is folded, the toggle button "pokes out" from the left edge. */
   position: absolute;
   left: 0;
   right: auto;
@@ -52,19 +63,118 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
 
 .pdg-backdrop { display: none; }
 
+/* ===== Sidebar sections (Layers / Actions / Watersheds) ===== */
+.pdg-section { border-top: 1px solid #ececec; }
+.pdg-section:first-of-type { border-top: 0; }
+
+.pdg-section-header {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pdg-section-header:hover { background: #f2f2f2; }
+.pdg-section-caret { color: #999; width: 12px; display: inline-block; }
+.pdg-section-body { padding: 6px 14px 12px; }
+.pdg-section-sublabel {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 4px 0 2px;
+}
+
+.pdg-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.pdg-menu-row:hover { background: #fff; }
+.pdg-menu-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1976d2; }
+.pdg-menu-divider { height: 1px; background: #e8e8e8; margin: 8px -8px; }
+.pdg-menu-muted { color: #888; margin: 4px 0; }
+
+.pdg-menu-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: #1976d2;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+.pdg-menu-action:hover { background: #1565c0; }
+.pdg-menu-action:disabled { background: #b0bec5; cursor: not-allowed; }
+.pdg-menu-action-icon { font-size: 18px; line-height: 1; width: 18px; text-align: center; }
+.pdg-menu-action-hint { margin-left: auto; font-size: 11px; opacity: 0.85; font-weight: 400; }
+
+/* ===== Watershed tree (inside section body) ===== */
+.pdg-tree { list-style: none; margin: 0; padding: 0; }
+.pdg-tree-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 4px 6px;
+  cursor: default;
+  border-radius: 4px;
+}
+.pdg-tree-row.selected { background: #e3f2fd; }
+.pdg-tree-toggle { color: #999; width: 12px; cursor: pointer; user-select: none; padding-top: 1px; }
+.pdg-tree-label { cursor: pointer; flex: 1; min-width: 0; }
+.pdg-tree-main { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+.pdg-tree-kind { color: #888; font-size: 10px; margin-top: 1px; }
+.pdg-tree-badge { font-size: 10px; color: #1976d2; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ===== Header ===== */
+.pdg-hamburger {
+  background: none;
+  border: 0;
+  padding: 6px 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: #1976d2;
+  display: none;
+}
+
+/* ===== Mobile breakpoint ===== */
 @media (max-width: 768px) {
+  .pdg-hamburger { display: inline-block; }
+
   .pdg-sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
-    width: 80vw;
-    max-width: 320px;
+    width: 84vw;
+    max-width: 340px;
     z-index: 1500;
     transform: translateX(-100%);
     transition: transform 0.22s ease;
     box-shadow: 2px 0 12px rgba(0,0,0,0.15);
   }
   .pdg-sidebar.open { transform: translateX(0); }
-  .pdg-sidebar.folded { transform: translateX(-100%); width: 80vw; min-width: 0; }
+  .pdg-sidebar.folded { transform: translateX(-100%); width: 84vw; min-width: 0; }
   .pdg-sidebar-toggle { display: none; }
   .pdg-backdrop {
     display: block;
@@ -74,13 +184,11 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
     z-index: 1400;
   }
 
-  /* Header gets compact on mobile */
   .pdg-header { padding: 8px 12px; gap: 6px; }
   .pdg-header-controls { gap: 8px; }
   .pdg-header-controls .pdg-userinfo { display: none; }
   .pdg-tagline { display: none; }
 
-  /* Map control panels go to bottom sheet style */
   .pdg-add-panel {
     left: 8px !important;
     right: 8px !important;
@@ -97,114 +205,4 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
     bottom: 12px !important;
     max-height: 70vh !important;
   }
-}
-
-.pdg-hamburger {
-  background: none;
-  border: 0;
-  padding: 6px 8px;
-  margin-right: 4px;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  color: #1976d2;
-  display: none;
-}
-@media (max-width: 768px) {
-  .pdg-hamburger { display: inline-block; }
-}
-
-/* ---------- Layers control: icon button + popover ---------- */
-.pdg-layers-control {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 1000;
-}
-.pdg-layers-btn {
-  width: 40px;
-  height: 40px;
-  background: #fff;
-  color: #1976d2;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s ease;
-}
-.pdg-layers-btn:hover { background: #f5f5f5; }
-.pdg-layers-btn:active { background: #e0e0e0; }
-.pdg-layers-btn[aria-expanded="true"] { background: #e3f2fd; color: #1565c0; }
-
-.pdg-layers-panel {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 6px;
-  width: 220px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-  padding: 10px 12px;
-  font-size: 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.pdg-layers-section-label {
-  font-size: 10px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-.pdg-layers-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.pdg-layers-row:hover { background: #fafafa; }
-.pdg-layers-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1976d2; }
-.pdg-layers-divider {
-  height: 1px;
-  background: #eee;
-  margin: 8px -12px;
-}
-
-/* ---------- Floating Action Button (+ Add water body) ---------- */
-.pdg-fab {
-  position: absolute;
-  bottom: 28px;
-  right: 28px;
-  width: 56px;
-  height: 56px;
-  border-radius: 28px;
-  background: #1976d2;
-  color: #fff;
-  border: 0;
-  box-shadow: 0 4px 14px rgba(25, 118, 210, 0.45);
-  cursor: pointer;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
-}
-.pdg-fab:hover { background: #1565c0; box-shadow: 0 6px 18px rgba(21, 101, 192, 0.55); }
-.pdg-fab:active { transform: scale(0.94); }
-.pdg-fab:focus-visible { outline: 3px solid rgba(25, 118, 210, 0.4); outline-offset: 2px; }
-
-@media (max-width: 768px) {
-  .pdg-layers-control { top: 10px; right: 10px; }
-  .pdg-layers-panel {
-    width: calc(100vw - 20px);
-    max-width: 280px;
-  }
-  .pdg-fab { bottom: 20px; right: 20px; }
 }
