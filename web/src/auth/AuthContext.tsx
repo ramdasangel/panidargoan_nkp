@@ -10,10 +10,17 @@ export interface User {
   role: Role;
 }
 
+export interface AuthMethods {
+  authMode: "dummy" | "google" | "both";
+  googleClientId: string | null;
+}
+
 interface AuthState {
   user: User | null;
   loading: boolean;
+  methods: AuthMethods | null;
   loginDummy: (email: string) => Promise<void>;
+  loginGoogle: (credential: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -22,13 +29,16 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [methods, setMethods] = useState<AuthMethods | null>(null);
 
   useEffect(() => {
+    // Fetch enabled auth methods (public — no token needed).
+    api<AuthMethods>("/api/auth/methods")
+      .then(setMethods)
+      .catch(() => setMethods({ authMode: "dummy", googleClientId: null }));
+
     const token = localStorage.getItem("pdg.token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) { setLoading(false); return; }
     api<User>("/api/auth/me")
       .then(setUser)
       .catch(() => setToken(null))
@@ -44,13 +54,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
+  async function loginGoogle(credential: string) {
+    const result = await api<{ token: string; user: User }>("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+    setToken(result.token);
+    setUser(result.user);
+  }
+
   function logout() {
     setToken(null);
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginDummy, logout }}>
+    <AuthContext.Provider value={{ user, loading, methods, loginDummy, loginGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

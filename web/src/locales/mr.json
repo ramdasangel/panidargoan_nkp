@@ -4,12 +4,15 @@
     "subtitle": "पाणलोट व प्रकल्प मंच"
   },
   "login": {
-    "heading": "साइन इन",
+    "heading": "साइन इन (डेमो)",
     "subheading": "डेमो वापरकर्ता निवडा",
     "selectUser": "वापरकर्ता निवडा",
     "signIn": "साइन इन करा",
     "loading": "वापरकर्ते लोड होत आहेत…",
-    "failed": "साइन इन अयशस्वी"
+    "failed": "साइन इन अयशस्वी",
+    "signInWithGoogle": "Google ने साइन इन करा",
+    "googleHint": "आपले Google खाते वापरा",
+    "noMethods": "कोणतीही साइन-इन पद्धत सक्षम नाही."
   },
   "nav": {
     "map": "नकाशा",

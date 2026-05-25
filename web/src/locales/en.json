@@ -4,12 +4,15 @@
     "subtitle": "Watershed & Project Platform"
   },
   "login": {
-    "heading": "Sign in",
+    "heading": "Sign in (demo)",
     "subheading": "Select a demo user",
     "selectUser": "Select user",
     "signIn": "Sign in",
     "loading": "Loading users…",
-    "failed": "Sign in failed"
+    "failed": "Sign in failed",
+    "signInWithGoogle": "Sign in with Google",
+    "googleHint": "Use your Google account",
+    "noMethods": "No sign-in methods are enabled. Set AUTH_MODE=dummy or AUTH_MODE=google on the server."
   },
   "nav": {
     "map": "Map",
