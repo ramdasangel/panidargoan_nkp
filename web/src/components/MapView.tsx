@@ -5,7 +5,7 @@ import type { Feature, FeatureCollection } from "geojson";
 import "leaflet/dist/leaflet.css";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/client";
-import { LayerToggle } from "./LayerToggle";
+import { LayersControl } from "./LayersControl";
 import { AddWaterSourceLayer, AddWaterSourcePanel, emptyState, type AddState } from "./AddWaterSource";
 import type { MapLayers, WaterSourceType } from "../types";
 
@@ -66,11 +66,19 @@ export function MapView({ focusWatershedId }: Props) {
 
   return (
     <div style={{ position: "relative", height: "100%" }}>
-      <LayerToggle
-        layers={layers}
-        onChange={setLayers}
-        onAddWaterSource={() => setAddState(emptyState())}
-      />
+      <LayersControl layers={layers} onChange={setLayers} />
+      {!adding && (
+        <button
+          className="pdg-fab"
+          onClick={() => setAddState(emptyState())}
+          aria-label={t("addWS.openButton")}
+          title={t("addWS.openButton")}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+          </svg>
+        </button>
+      )}
       {addState && (
         <AddWaterSourcePanel
           state={addState}
