@@ -87,6 +87,12 @@ model Village {
   createdAt           DateTime                                          @default(now())
 }
 
+enum WaterSourceOrigin {
+  manual
+  osm
+  imported
+}
+
 enum WaterSourceType {
   river
   stream
@@ -128,6 +134,7 @@ model WaterSource {
   code        String                                      @unique
   name        String
   type        WaterSourceType
+  source      WaterSourceOrigin                           @default(manual)
   watershedId String?
   watershed   Watershed?                                  @relation(fields: [watershedId], references: [id])
   capacityM3  Float?
@@ -141,6 +148,7 @@ model WaterSource {
 
   @@index([watershedId])
   @@index([type])
+  @@index([source])
 }
 
 enum ProjectStatus {

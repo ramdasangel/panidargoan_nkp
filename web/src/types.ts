@@ -18,9 +18,12 @@ export interface MapLayers {
   villages: boolean;
   talukas: boolean;
   watersheds: boolean;
-  waterSources: boolean;
+  waterSourcesManual: boolean;
+  waterSourcesAuto: boolean;
   terrain: boolean;
 }
+
+export type WaterSourceOrigin = "manual" | "osm" | "imported";
 
 export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
 export type TaskStatus = "not_started" | "in_progress" | "blocked" | "completed";

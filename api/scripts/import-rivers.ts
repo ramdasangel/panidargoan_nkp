@@ -125,11 +125,12 @@ out geom;`;
     }
 
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "WaterSource" (code, name, type, "watershedId", condition, notes, geom)
-       VALUES ($1, $2, $3::"WaterSourceType", $4, $5, $6, ST_GeogFromText($7))
+      `INSERT INTO "WaterSource" (code, name, type, source, "watershedId", condition, notes, geom)
+       VALUES ($1, $2, $3::"WaterSourceType", 'osm'::"WaterSourceOrigin", $4, $5, $6, ST_GeogFromText($7))
        ON CONFLICT (code) DO UPDATE SET
          name = EXCLUDED.name,
          type = EXCLUDED.type,
+         source = EXCLUDED.source,
          "watershedId" = EXCLUDED."watershedId",
          condition = EXCLUDED.condition,
          notes = EXCLUDED.notes,

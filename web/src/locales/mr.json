@@ -32,6 +32,8 @@
     "layerTalukas": "तालुके",
     "layerWatersheds": "पाणलोट",
     "layerWaterSources": "पाणी स्रोत",
+    "layerWaterSourcesManual": "पाणी स्रोत (स्वहस्ते नकाशा)",
+    "layerWaterSourcesAuto": "पाणी स्रोत (स्वयं स्रोत)",
     "layerTerrain": "भूभाग (उंची नकाशा)",
     "basemap": "बेस नकाशा"
   },
