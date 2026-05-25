@@ -14,19 +14,22 @@ interface Props {
   onLayersChange: (next: MapLayers) => void;
   onOpenAddWaterSource: () => void;
   addModeActive: boolean;
+  isAdmin: boolean;
+  onOpenUserManagement: () => void;
 }
 
 export function Sidebar(props: Props) {
   const {
     selectedId, onSelect, open, onToggle, isMobile,
     layers, onLayersChange, onOpenAddWaterSource, addModeActive,
+    isAdmin, onOpenUserManagement,
   } = props;
   const { t } = useTranslation();
   const [tree, setTree] = useState<WatershedNode[] | null>(null);
   const [summaries, setSummaries] = useState<WatershedCostSummary[]>([]);
-  // Each top-level section can be collapsed independently.
   const [layersOpen, setLayersOpen] = useState(true);
   const [actionsOpen, setActionsOpen] = useState(true);
+  const [adminOpen, setAdminOpen] = useState(true);
   const [watershedsOpen, setWatershedsOpen] = useState(true);
 
   useEffect(() => {
@@ -106,6 +109,24 @@ export function Sidebar(props: Props) {
             {addModeActive && <span className="pdg-menu-action-hint">{t("sidebar.inProgress")}</span>}
           </button>
         </Section>
+
+        {/* ADMIN — only visible to admins */}
+        {isAdmin && (
+          <Section
+            title={t("sidebar.admin")}
+            open={adminOpen}
+            onToggle={() => setAdminOpen((o) => !o)}
+          >
+            <button
+              className="pdg-menu-action pdg-menu-action-secondary"
+              onClick={() => { onOpenUserManagement(); if (isMobile) onToggle(); }}
+              type="button"
+            >
+              <span className="pdg-menu-action-icon">👥</span>
+              <span>{t("users.manageUsers")}</span>
+            </button>
+          </Section>
+        )}
 
         {/* WATERSHEDS */}
         <Section

@@ -71,7 +71,25 @@
   "sidebar": {
     "menu": "मेनू",
     "actions": "क्रिया",
+    "admin": "प्रशासन",
     "inProgress": "चालू आहे"
+  },
+  "users": {
+    "title": "वापरकर्ता व्यवस्थापन",
+    "manageUsers": "वापरकर्ते व्यवस्थापित करा",
+    "emailPh": "email@example.com",
+    "namePh": "नाव (पर्यायी)",
+    "add": "जोडा",
+    "addHint": "नवीन वापरकर्ते नंतर Google ने साइन इन करतील — येथे सेट केलेली भूमिका टिकवली जाते.",
+    "delete": "हटवा",
+    "confirmDelete": "{{email}} हटवायचा? हे पूर्ववत होणार नाही.",
+    "cantDeleteSelf": "स्वतःचे खाते हटवू शकत नाही",
+    "you": "तुम्ही",
+    "noneInRole": "या भूमिकेत अद्याप वापरकर्ते नाहीत.",
+    "role_admin": "प्रशासक",
+    "role_project_manager": "प्रकल्प व्यवस्थापक",
+    "role_field_user": "क्षेत्र वापरकर्ते",
+    "role_viewer": "दर्शक"
   },
   "watershed": {
     "title": "पाणलोट",
