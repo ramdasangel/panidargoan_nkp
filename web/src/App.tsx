@@ -16,7 +16,8 @@ export function App() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [layers, setLayers] = useState<MapLayers>({
-    villages: true, talukas: true, watersheds: true, waterSources: true, terrain: false,
+    villages: true, talukas: true, watersheds: true,
+    waterSourcesManual: true, waterSourcesAuto: true, terrain: false,
   });
   const [addState, setAddState] = useState<AddState | null>(null);
   const [showUserMgmt, setShowUserMgmt] = useState(false);

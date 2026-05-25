@@ -89,8 +89,8 @@ waterSourcesRouter.post("/", requireRole("admin", "project_manager", "field_user
   const kml = p.kml ?? geometryToKml(p.geometry, p.name);
 
   const rows = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
-    `INSERT INTO "WaterSource" (code, name, type, "watershedId", "capacityM3", "depthM", condition, notes, geom, kml)
-     VALUES ($1, $2, $3::"WaterSourceType", $4, $5, $6, $7, $8,
+    `INSERT INTO "WaterSource" (code, name, type, source, "watershedId", "capacityM3", "depthM", condition, notes, geom, kml)
+     VALUES ($1, $2, $3::"WaterSourceType", 'manual'::"WaterSourceOrigin", $4, $5, $6, $7, $8,
              ST_SetSRID(ST_GeomFromGeoJSON($9), 4326)::geography, $10)
      RETURNING id`,
     code, p.name, p.type, watershedId,

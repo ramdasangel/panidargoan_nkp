@@ -49,7 +49,8 @@ export function Sidebar(props: Props) {
     ["villages", t("map.layerVillages")],
     ["talukas", t("map.layerTalukas")],
     ["watersheds", t("map.layerWatersheds")],
-    ["waterSources", t("map.layerWaterSources")],
+    ["waterSourcesManual", t("map.layerWaterSourcesManual")],
+    ["waterSourcesAuto", t("map.layerWaterSourcesAuto")],
   ];
 
   const classes = ["pdg-sidebar", open ? "open" : "folded"].join(" ");

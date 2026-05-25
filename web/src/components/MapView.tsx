@@ -21,6 +21,7 @@ interface WaterSourceProps {
   code: string;
   name: string;
   type: WaterSourceType;
+  source: "manual" | "osm" | "imported";
   capacityM3?: number | null;
   depthM?: number | null;
   condition?: string | null;
@@ -161,7 +162,12 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
           />
         )}
 
-        {layers.waterSources && <WaterSourcesLayer data={waterSources} interactive={!adding} />}
+        {(layers.waterSourcesManual || layers.waterSourcesAuto) && (
+          <WaterSourcesLayer
+            data={filterBySource(waterSources, layers.waterSourcesManual, layers.waterSourcesAuto)}
+            interactive={!adding}
+          />
+        )}
 
         {addState && <AddWaterSourceLayer state={addState} setState={setAddState} onSaved={() => setRefreshTick((n) => n + 1)} />}
 
@@ -201,6 +207,17 @@ function FlyToPoint({ focus }: { focus: LocationFocus | null }) {
     }
   }, [focus, map]);
   return null;
+}
+
+function filterBySource(data: FeatureCollection, showManual: boolean, showAuto: boolean): FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: data.features.filter((f) => {
+      const src = (f.properties as { source?: string } | null)?.source;
+      const isManual = src === "manual";
+      return isManual ? showManual : showAuto;
+    }),
+  };
 }
 
 function WaterSourcesLayer({ data, interactive }: { data: FeatureCollection; interactive: boolean }) {

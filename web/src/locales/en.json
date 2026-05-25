@@ -32,6 +32,8 @@
     "layerTalukas": "Talukas",
     "layerWatersheds": "Watersheds",
     "layerWaterSources": "Water sources",
+    "layerWaterSourcesManual": "Water sources (manually mapped)",
+    "layerWaterSourcesAuto": "Water sources (auto sourced)",
     "layerTerrain": "Terrain (DEM)",
     "basemap": "Base map"
   },
