@@ -266,15 +266,18 @@ export function AddWaterSourcePanel({ state, setState, onSaved }: Props) {
     <div className="pdg-add-panel" style={styles.panel}>
       <div style={styles.header}>
         <strong>{t("addWS.title")}</strong>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
             onClick={() => setState({ ...state, collapsed: true })}
-            style={styles.headerIconBtn}
+            style={styles.headerMapBtn}
             aria-label={t("addWS.collapse")}
             title={t("addWS.collapse")}
             type="button"
           >
-            ⤡
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
+            </svg>
+            {t("addWS.showMap")}
           </button>
           <button onClick={cancel} style={styles.close} aria-label="Close" type="button">×</button>
         </div>
@@ -458,6 +461,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid #eee", position: "sticky", top: 0, background: "#fff", zIndex: 1 },
   headerIconBtn: { background: "none", border: 0, fontSize: 16, color: "#888", cursor: "pointer", lineHeight: 1, padding: "2px 6px" },
+  headerMapBtn: {
+    background: "#fff", color: "#1976d2", border: "1px solid #1976d2",
+    borderRadius: 4, padding: "5px 10px", fontSize: 12, cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600,
+    lineHeight: 1,
+  },
   close: { background: "none", border: 0, fontSize: 22, color: "#888", cursor: "pointer", lineHeight: 1 },
   collapsedBar: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px" },
   collapsedDot: { width: 8, height: 8, borderRadius: 4, background: "#d81b60", flexShrink: 0, animation: "pdg-pulse 1.6s ease-in-out infinite" },
