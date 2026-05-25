@@ -237,20 +237,26 @@ export function AddWaterSourcePanel({ state, setState, onSaved }: Props) {
     return (
       <div className="pdg-add-panel pdg-add-collapsed">
         <div style={styles.collapsedBar}>
-          <strong style={{ fontSize: 13 }}>{t("addWS.title")}</strong>
-          <span style={styles.collapsedMeta}>
-            {t(`waterSource.type_${state.type}`)} · {state.points.length} {t("addWS.verticesShort")}
-          </span>
+          <span style={styles.collapsedDot} />
+          <div style={styles.collapsedLabel}>
+            <strong style={{ fontSize: 13 }}>{t("addWS.title")}</strong>
+            <span style={styles.collapsedMeta}>
+              {t(`waterSource.type_${state.type}`)} · {state.points.length} {t("addWS.verticesShort")}
+            </span>
+          </div>
           <button
             onClick={() => setState({ ...state, collapsed: false })}
             style={styles.collapsedExpand}
-            aria-label={t("addWS.expand")}
-            title={t("addWS.expand")}
+            aria-label={t("addWS.openForm")}
+            title={t("addWS.openForm")}
             type="button"
           >
-            ⤢
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z" />
+            </svg>
+            {t("addWS.openForm")}
           </button>
-          <button onClick={cancel} style={styles.close} aria-label="Close" type="button">×</button>
+          <button onClick={cancel} style={styles.collapsedClose} aria-label="Close" title="Cancel" type="button">×</button>
         </div>
       </div>
     );
@@ -453,9 +459,18 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid #eee", position: "sticky", top: 0, background: "#fff", zIndex: 1 },
   headerIconBtn: { background: "none", border: 0, fontSize: 16, color: "#888", cursor: "pointer", lineHeight: 1, padding: "2px 6px" },
   close: { background: "none", border: 0, fontSize: 22, color: "#888", cursor: "pointer", lineHeight: 1 },
-  collapsedBar: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px" },
-  collapsedMeta: { flex: 1, fontSize: 12, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  collapsedExpand: { background: "#1976d2", color: "#fff", border: 0, borderRadius: 4, padding: "4px 8px", fontSize: 14, cursor: "pointer", lineHeight: 1 },
+  collapsedBar: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px" },
+  collapsedDot: { width: 8, height: 8, borderRadius: 4, background: "#d81b60", flexShrink: 0, animation: "pdg-pulse 1.6s ease-in-out infinite" },
+  collapsedLabel: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1, overflow: "hidden" },
+  collapsedMeta: { fontSize: 11, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  collapsedExpand: {
+    background: "#1976d2", color: "#fff", border: 0, borderRadius: 4,
+    padding: "6px 12px", fontSize: 13, cursor: "pointer", lineHeight: 1,
+    display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600,
+    boxShadow: "0 2px 6px rgba(25,118,210,0.4)",
+    flexShrink: 0,
+  },
+  collapsedClose: { background: "#fff", color: "#888", border: "1px solid #e0e0e0", borderRadius: 4, width: 28, height: 28, cursor: "pointer", fontSize: 18, lineHeight: 1, flexShrink: 0 },
   section: { padding: "10px 14px", borderBottom: "1px solid #f4f4f4" },
   label: { display: "block", fontSize: 11, color: "#666", marginTop: 8, marginBottom: 2, textTransform: "uppercase", letterSpacing: 0.4 },
   select: { width: "100%", padding: "6px 8px", fontSize: 13, border: "1px solid #ccc", borderRadius: 4, background: "#fff" },

@@ -46,6 +46,7 @@
     "tabKml": "Paste / upload KML",
     "verticesShort": "pts",
     "expand": "Expand panel",
+    "openForm": "Form",
     "collapse": "Collapse panel (see map)",
     "kmlPlaceholder": "Paste the contents of a .kml file here…",
     "uploadKml": "Upload .kml",
