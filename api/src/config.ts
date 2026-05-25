@@ -26,4 +26,9 @@ export const config = {
   // First-time Google sign-in: any email that matches this CSV gets the admin role.
   // Everyone else starts as viewer. Set via env, e.g. ADMIN_EMAILS=foo@gmail.com,bar@gmail.com
   adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+  minioEndpoint: process.env.MINIO_ENDPOINT ?? "",
+  minioRegion: process.env.MINIO_REGION ?? "us-east-1",
+  minioBucket: process.env.MINIO_BUCKET ?? "panidargoan",
+  minioAccessKey: process.env.MINIO_ACCESS_KEY ?? "",
+  minioSecretKey: process.env.MINIO_SECRET_KEY ?? "",
 };

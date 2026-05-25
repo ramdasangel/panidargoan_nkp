@@ -93,7 +93,8 @@
     "temperature": "Temperature",
     "condShort": "cond.",
     "noLogs": "No log entries yet. Use 'Add log' to record observations.",
-    "confirmDeleteLog": "Delete this log entry?"
+    "confirmDeleteLog": "Delete this log entry?",
+    "attachments": "Attachments (photo / PDF / image)"
   },
   "search": {
     "placeholder": "Search village or taluka…",

@@ -17,6 +17,15 @@ interface MasterRecord {
   kml?: string | null;
 }
 
+interface Attachment {
+  id: string;
+  url: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
 interface LogRecord {
   id: string;
   loggedAt: string;
@@ -29,6 +38,7 @@ interface LogRecord {
   condition: string | null;
   notes: string | null;
   loggedBy: { id: string; email: string; name: string } | null;
+  attachments: Attachment[];
 }
 
 interface Props {
@@ -53,6 +63,7 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
   const [mode, setMode] = useState<"view" | "edit" | "log">("view");
   const [edit, setEdit] = useState<MasterRecord | null>(null);
   const [logDraft, setLogDraft] = useState<typeof blankLog>(blankLog);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   async function refresh() {
     try {
@@ -103,12 +114,38 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
       if (logDraft.notes.trim())     body.notes     = logDraft.notes.trim();
       if (logDraft.loggedAt)         body.loggedAt  = new Date(logDraft.loggedAt).toISOString();
 
-      await api(`/api/water-sources/${waterSourceId}/logs`, {
+      const created = await api<{ id: string }>(`/api/water-sources/${waterSourceId}/logs`, {
         method: "POST",
         body: JSON.stringify(body),
       });
+
+      // Upload attachments now that we have the log id
+      if (pendingFiles.length > 0) {
+        const form = new FormData();
+        for (const f of pendingFiles) form.append("files", f);
+        const token = localStorage.getItem("pdg.token");
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL ?? ""}/api/water-sources/${waterSourceId}/logs/${created.id}/attachments`,
+          { method: "POST", body: form, headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+        );
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Attachment upload failed: ${res.status} ${text}`);
+        }
+      }
+
       setLogDraft(blankLog);
+      setPendingFiles([]);
       setMode("view");
+      await refresh();
+    } catch (e) { setError(String(e)); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteAttachment(logId: string, attId: string) {
+    setBusy(true); setError(null);
+    try {
+      await api(`/api/water-sources/${waterSourceId}/logs/${logId}/attachments/${attId}`, { method: "DELETE" });
       await refresh();
     } catch (e) { setError(String(e)); }
     finally { setBusy(false); }
@@ -232,8 +269,26 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
             <Field label={t("addWS.notes")} span={2}>
               <textarea rows={2} value={logDraft.notes} onChange={(e) => setLogDraft({ ...logDraft, notes: e.target.value })} style={styles.textarea} />
             </Field>
+            <Field label={t("wsDetail.attachments")} span={2}>
+              <input
+                type="file"
+                multiple
+                accept="image/*,application/pdf"
+                onChange={(e) => setPendingFiles(Array.from(e.target.files ?? []))}
+                style={styles.fileInput}
+              />
+              {pendingFiles.length > 0 && (
+                <div style={styles.pendingList}>
+                  {pendingFiles.map((f, i) => (
+                    <span key={i} style={styles.pendingItem}>
+                      📎 {f.name} <span style={styles.muted}>({Math.round(f.size/1024)} KB)</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </Field>
             <div style={styles.formActions}>
-              <button onClick={() => { setMode("view"); setLogDraft(blankLog); }} disabled={busy} style={styles.cancelBtn} type="button">{t("addWS.cancel")}</button>
+              <button onClick={() => { setMode("view"); setLogDraft(blankLog); setPendingFiles([]); }} disabled={busy} style={styles.cancelBtn} type="button">{t("addWS.cancel")}</button>
               <button onClick={saveLog} disabled={busy} style={styles.saveBtn} type="button">{busy ? t("addWS.saving") : t("wsDetail.saveLog")}</button>
             </div>
           </div>
@@ -262,6 +317,13 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
                   {l.condition            && <Stat label={t("wsDetail.condShort")} val={l.condition} />}
                 </div>
                 {l.notes && <div style={styles.logNotes}>{l.notes}</div>}
+                {l.attachments && l.attachments.length > 0 && (
+                  <div style={styles.attList}>
+                    {l.attachments.map((a) => (
+                      <AttachmentPreview key={a.id} attachment={a} onDelete={() => deleteAttachment(l.id, a.id)} />
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -269,6 +331,26 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
       </section>
 
       {error && <div style={styles.error}>{error}</div>}
+    </div>
+  );
+}
+
+function AttachmentPreview({ attachment, onDelete }: { attachment: Attachment; onDelete: () => void }) {
+  const isImage = attachment.mimeType.startsWith("image/");
+  const fullUrl = (import.meta.env.VITE_API_URL ?? "") + attachment.url;
+  return (
+    <div style={styles.attItem}>
+      <a href={fullUrl} target="_blank" rel="noopener noreferrer" style={styles.attLink} title={attachment.filename}>
+        {isImage ? (
+          <img src={fullUrl} alt={attachment.filename} style={styles.attThumb} loading="lazy" />
+        ) : (
+          <div style={styles.attPdfBox}>
+            <span style={styles.attPdfIcon}>📄</span>
+            <span style={styles.attPdfName}>{attachment.filename}</span>
+          </div>
+        )}
+      </a>
+      <button onClick={(e) => { e.preventDefault(); onDelete(); }} style={styles.attDel} aria-label="Delete" title="Delete">×</button>
     </div>
   );
 }
@@ -326,5 +408,16 @@ const styles: Record<string, React.CSSProperties> = {
   statWarn: { background: "#fff3e0", color: "#bf6000" },
   statLabel: { color: "#888", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4 },
   logNotes: { marginTop: 4, fontSize: 12, color: "#555", fontStyle: "italic" },
+  fileInput: { fontSize: 12 },
+  pendingList: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 },
+  pendingItem: { background: "#e3f2fd", color: "#1565c0", padding: "3px 8px", borderRadius: 10, fontSize: 11 },
+  attList: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 },
+  attItem: { position: "relative", display: "inline-block" },
+  attLink: { display: "block", textDecoration: "none" },
+  attThumb: { width: 64, height: 64, objectFit: "cover", borderRadius: 4, border: "1px solid #e0e0e0" },
+  attPdfBox: { display: "flex", alignItems: "center", gap: 4, padding: "6px 8px", background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 4, maxWidth: 160 },
+  attPdfIcon: { fontSize: 16 },
+  attPdfName: { fontSize: 11, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  attDel: { position: "absolute", top: -6, right: -6, background: "#fff", border: "1px solid #ccc", borderRadius: 10, width: 18, height: 18, lineHeight: "14px", textAlign: "center", padding: 0, fontSize: 12, color: "#888", cursor: "pointer" },
   error: { marginTop: 12, padding: "8px 10px", background: "#ffebee", color: "#c62828", fontSize: 12, borderRadius: 4 },
 };

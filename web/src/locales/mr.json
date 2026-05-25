@@ -93,7 +93,8 @@
     "temperature": "तापमान",
     "condShort": "स्थिती",
     "noLogs": "अद्याप नोंद नाही. निरीक्षण नोंदवण्यासाठी 'नोंद जोडा' वापरा.",
-    "confirmDeleteLog": "ही नोंद हटवायची?"
+    "confirmDeleteLog": "ही नोंद हटवायची?",
+    "attachments": "जोडलेली फाईल (फोटो / PDF / प्रतिमा)"
   },
   "search": {
     "placeholder": "गाव किंवा तालुका शोधा…",

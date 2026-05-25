@@ -17,16 +17,17 @@ enum Role {
 }
 
 model User {
-  id                  String             @id @default(uuid())
-  email               String             @unique
+  id                  String                       @id @default(uuid())
+  email               String                       @unique
   name                String
   role                Role
-  googleSub           String?            @unique
-  createdProjects     Project[]          @relation("ProjectCreatedBy")
-  assignedTasks       Task[]             @relation("TaskAssignee")
-  recordedCostEntries CostEntry[]        @relation("CostEntryRecordedBy")
-  waterSourceLogs     WaterSourceLog[]   @relation("WaterSourceLogLoggedBy")
-  createdAt           DateTime           @default(now())
+  googleSub           String?                      @unique
+  createdProjects     Project[]                    @relation("ProjectCreatedBy")
+  assignedTasks       Task[]                       @relation("TaskAssignee")
+  recordedCostEntries CostEntry[]                  @relation("CostEntryRecordedBy")
+  waterSourceLogs     WaterSourceLog[]             @relation("WaterSourceLogLoggedBy")
+  uploadedAttachments WaterSourceLogAttachment[]   @relation("AttachmentUploadedBy")
+  createdAt           DateTime                     @default(now())
 }
 
 model Country {
@@ -154,12 +155,12 @@ model WaterSource {
 }
 
 model WaterSourceLog {
-  id            String      @id @default(uuid())
+  id            String                       @id @default(uuid())
   waterSourceId String
-  waterSource   WaterSource @relation(fields: [waterSourceId], references: [id], onDelete: Cascade)
-  loggedAt      DateTime    @default(now())
+  waterSource   WaterSource                  @relation(fields: [waterSourceId], references: [id], onDelete: Cascade)
+  loggedAt      DateTime                     @default(now())
   loggedById    String?
-  loggedBy      User?       @relation("WaterSourceLogLoggedBy", fields: [loggedById], references: [id])
+  loggedBy      User?                        @relation("WaterSourceLogLoggedBy", fields: [loggedById], references: [id])
 
   flowM3PerDay  Float?
   waterLevelCm  Float?
@@ -170,10 +171,26 @@ model WaterSourceLog {
   condition     String?
   notes         String?
 
-  createdAt     DateTime    @default(now())
+  attachments   WaterSourceLogAttachment[]
+  createdAt     DateTime                     @default(now())
 
   @@index([waterSourceId])
   @@index([loggedAt(sort: Desc)])
+}
+
+model WaterSourceLogAttachment {
+  id           String         @id @default(uuid())
+  logId        String
+  log          WaterSourceLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  url          String
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  uploadedById String?
+  uploadedBy   User?          @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@index([logId])
 }
 
 enum ProjectStatus {
