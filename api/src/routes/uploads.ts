@@ -14,6 +14,12 @@ uploadsRouter.get(/.+/, async (req, res) => {
     if (contentType)   res.setHeader("Content-Type", contentType);
     if (contentLength) res.setHeader("Content-Length", contentLength.toString());
     res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // Lock down SVG and HTML so they can't execute scripts when served as
+    // attachments — only same-origin styles/images are allowed.
+    if (contentType === "image/svg+xml" || contentType === "text/html") {
+      res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'");
+    }
     body.pipe(res);
     body.on("error", (e) => {
       console.error("[uploads] stream error:", e);

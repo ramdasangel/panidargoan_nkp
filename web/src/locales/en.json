@@ -94,7 +94,7 @@
     "condShort": "cond.",
     "noLogs": "No log entries yet. Use 'Add log' to record observations.",
     "confirmDeleteLog": "Delete this log entry?",
-    "attachments": "Attachments (photo / PDF / image)"
+    "attachments": "Attachments (images, PDFs, Office, KML, etc. — up to 25 MB each)"
   },
   "search": {
     "placeholder": "Search village or taluka…",

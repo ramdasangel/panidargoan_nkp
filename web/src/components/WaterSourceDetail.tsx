@@ -273,7 +273,7 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
               <input
                 type="file"
                 multiple
-                accept="image/*,application/pdf"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.tsv,.rtf,.md,.html,.xml,.json,.zip,.kml,.kmz,.geojson"
                 onChange={(e) => setPendingFiles(Array.from(e.target.files ?? []))}
                 style={styles.fileInput}
               />
