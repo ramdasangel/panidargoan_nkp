@@ -28,13 +28,14 @@
     "slope": "Avg slope",
     "slopeUnit": "%",
     "layers": "Layers",
-    "layerVillages": "Villages",
     "layerTalukas": "Talukas",
     "layerWatersheds": "Watersheds",
     "layerWaterSources": "Water sources",
     "layerWaterSourcesManual": "Water sources (manually mapped)",
-    "layerWaterSourcesAuto": "Water sources (auto sourced)",
-    "layerTerrain": "Terrain (DEM)",
+    "layerWaterSourcesBhuvan": "Water sources (Bhuvan auto)",
+    "layerBhuvanWaterbodies": "Bhuvan waterbodies",
+    "layerBhuvanWatersheds": "Bhuvan watershed boundaries",
+    "layerBhuvanSubbasins": "Bhuvan sub-basins",
     "basemap": "Base map"
   },
   "addWS": {

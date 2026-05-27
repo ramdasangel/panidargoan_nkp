@@ -59,7 +59,7 @@ waterSourcesRouter.get("/", async (req, res) => {
   const items = await prisma.waterSource.findMany({
     where: watershedId ? { watershedId } : undefined,
     select: {
-      id: true, code: true, name: true, type: true, watershedId: true,
+      id: true, code: true, name: true, type: true, source: true, watershedId: true,
       capacityM3: true, depthM: true, condition: true, notes: true,
     },
     orderBy: { name: "asc" },
@@ -71,7 +71,7 @@ waterSourcesRouter.get("/:id", async (req, res) => {
   const item = await prisma.waterSource.findUnique({
     where: { id: req.params.id },
     select: {
-      id: true, code: true, name: true, type: true, watershedId: true,
+      id: true, code: true, name: true, type: true, source: true, watershedId: true,
       capacityM3: true, depthM: true, condition: true, notes: true, kml: true,
     },
   });
