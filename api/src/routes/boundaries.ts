@@ -97,21 +97,36 @@ boundariesRouter.get("/talukas", async (req, res) => {
 boundariesRouter.get("/watersheds", async (req, res) => {
   const level = typeof req.query.level === "string" ? Number(req.query.level) : null;
   const parentId = typeof req.query.parentId === "string" ? req.query.parentId : null;
-  const payload = await cached(`boundaries:watersheds:${level ?? "all"}:${parentId ?? "all"}`, BOUNDARY_TTL, async () => {
+  const root = typeof req.query.root === "string" ? req.query.root : null;
+  const payload = await cached(
+    `boundaries:watersheds:${level ?? "all"}:${parentId ?? "all"}:${root ?? "all"}`,
+    BOUNDARY_TTL,
+    async () => {
+  // When ?root=<code> is given, return that watershed + every descendant.
+  // Implemented via a recursive CTE that walks parentId from the named root.
   const rows = await prisma.$queryRawUnsafe<
     Array<{
       id: string; code: string; name: string; kind: string; level: number;
       parent_id: string | null; area_km2: number | null; geom: string | null;
     }>
   >(
-    `SELECT id, code, name, kind, level, "parentId" AS parent_id,
+    `WITH RECURSIVE scope AS (
+        SELECT id FROM "Watershed"
+         WHERE $3::text IS NULL OR code = $3
+        UNION ALL
+        SELECT w.id FROM "Watershed" w
+          JOIN scope s ON w."parentId" = s.id
+     )
+     SELECT id, code, name, kind, level, "parentId" AS parent_id,
             "areaKm2" AS area_km2, ST_AsGeoJSON(boundary)::text AS geom
        FROM "Watershed"
        WHERE ($1::int IS NULL OR level = $1)
          AND ($2::text IS NULL OR "parentId" = $2)
+         AND ($3::text IS NULL OR id IN (SELECT id FROM scope))
          AND boundary IS NOT NULL`,
     level && !Number.isNaN(level) ? level : null,
-    parentId
+    parentId,
+    root
   );
 
   const features: GeoJsonFeature[] = rows.map((r) => ({

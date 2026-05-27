@@ -34,7 +34,9 @@ export function Sidebar(props: Props) {
   const [watershedsOpen, setWatershedsOpen] = useState(true);
 
   useEffect(() => {
-    api<WatershedNode[]>("/api/watersheds/tree").then(setTree).catch(console.error);
+    const root = import.meta.env.VITE_PROJECT_WATERSHED_ROOT ?? "";
+    const url  = root ? `/api/watersheds/tree?root=${encodeURIComponent(root)}` : "/api/watersheds/tree";
+    api<WatershedNode[]>(url).then(setTree).catch(console.error);
     api<WatershedCostSummary[]>("/api/reports/watersheds/cost-summary")
       .then(setSummaries)
       .catch(console.error);

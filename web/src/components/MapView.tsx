@@ -70,8 +70,10 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
 
   // Pull boundaries once map is ready
   useEffect(() => {
+    const root = import.meta.env.VITE_PROJECT_WATERSHED_ROOT ?? "";
+    const wsUrl = root ? `/api/boundaries/watersheds?root=${encodeURIComponent(root)}` : "/api/boundaries/watersheds";
     api<FeatureCollection>("/api/boundaries/talukas").then(setTalukas).catch(console.error);
-    api<FeatureCollection>("/api/boundaries/watersheds").then(setWatersheds).catch(console.error);
+    api<FeatureCollection>(wsUrl).then(setWatersheds).catch(console.error);
   }, []);
   useEffect(() => {
     api<FeatureCollection>("/api/boundaries/water-sources").then(setWaterSources).catch(console.error);

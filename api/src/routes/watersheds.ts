@@ -46,8 +46,14 @@ watershedsRouter.get("/", async (req, res) => {
   res.json(items);
 });
 
-watershedsRouter.get("/tree", async (_req, res) => {
-  const tree = await cached("watersheds:tree", 3600, async () => {
+// ?root=<code> filters the tree to a subtree rooted at the watershed with
+// the given code. Default = full tree. The sidebar passes
+// root=WS-UPPER-BHIMA to scope visibility to the project area.
+watershedsRouter.get("/tree", async (req, res) => {
+  const rootCode = typeof req.query.root === "string" ? req.query.root : null;
+  const cacheKey = `watersheds:tree:${rootCode ?? "all"}`;
+
+  const tree = await cached(cacheKey, 3600, async () => {
     const all = await prisma.watershed.findMany({
       select: { id: true, code: true, name: true, kind: true, level: true, parentId: true, areaKm2: true },
       orderBy: [{ level: "asc" }, { name: "asc" }],
@@ -65,7 +71,11 @@ watershedsRouter.get("/tree", async (_req, res) => {
         roots.push(node);
       }
     }
-    return roots;
+
+    if (!rootCode) return roots;
+    const found = all.find((w) => w.code === rootCode);
+    if (!found) return [];
+    return [byId.get(found.id)!];
   });
   res.json(tree);
 });
