@@ -107,6 +107,29 @@ html, body, #root { margin: 0; padding: 0; height: 100%; }
 .pdg-menu-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1976d2; }
 .pdg-menu-divider { height: 1px; background: #e8e8e8; margin: 8px -8px; }
 .pdg-menu-muted { color: #888; margin: 4px 0; }
+.pdg-tree-rename-icon {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #999;
+  padding: 0 4px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.pdg-tree-row:hover .pdg-tree-rename-icon { opacity: 1; }
+.pdg-tree-rename-icon:hover { color: #1976d2; }
+.pdg-tree-rename-btn {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 13px;
+  border-radius: 3px;
+}
+.pdg-tree-rename-btn:first-of-type { color: #2e7d32; }
+.pdg-tree-rename-btn:last-of-type { color: #c62828; }
+.pdg-tree-rename-btn:hover { background: rgba(0,0,0,0.05); }
 
 .pdg-menu-action {
   display: flex;
