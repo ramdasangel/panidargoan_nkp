@@ -63,6 +63,47 @@ waterSourceLogsRouter.post(
   }
 );
 
+waterSourceLogsRouter.put(
+  "/:logId",
+  requireRole("admin", "project_manager", "field_user"),
+  async (req, res) => {
+    const parsed = logSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "Invalid body", details: parsed.error.flatten() });
+
+    const logId = (req.params as { logId: string }).logId;
+    const existing = await prisma.waterSourceLog.findUnique({
+      where: { id: logId },
+      select: { id: true, loggedById: true },
+    });
+    if (!existing) return res.status(404).json({ error: "Log entry not found" });
+
+    // Field users can only edit their own logs; admin and PM can edit any.
+    if (req.user!.role === "field_user" && existing.loggedById !== req.user!.sub) {
+      return res.status(403).json({ error: "Not allowed to edit this log" });
+    }
+
+    const updated = await prisma.waterSourceLog.update({
+      where: { id: logId },
+      data: {
+        ...(parsed.data.loggedAt    !== undefined ? { loggedAt: new Date(parsed.data.loggedAt) } : {}),
+        ...(parsed.data.flowM3PerDay !== undefined ? { flowM3PerDay: parsed.data.flowM3PerDay } : {}),
+        ...(parsed.data.waterLevelCm !== undefined ? { waterLevelCm: parsed.data.waterLevelCm } : {}),
+        ...(parsed.data.phLevel      !== undefined ? { phLevel: parsed.data.phLevel } : {}),
+        ...(parsed.data.tdsPpm       !== undefined ? { tdsPpm: parsed.data.tdsPpm } : {}),
+        ...(parsed.data.turbidityNtu !== undefined ? { turbidityNtu: parsed.data.turbidityNtu } : {}),
+        ...(parsed.data.temperatureC !== undefined ? { temperatureC: parsed.data.temperatureC } : {}),
+        ...(parsed.data.condition    !== undefined ? { condition: parsed.data.condition } : {}),
+        ...(parsed.data.notes        !== undefined ? { notes: parsed.data.notes } : {}),
+      },
+      include: {
+        loggedBy:    { select: { id: true, email: true, name: true } },
+        attachments: { select: { id: true, url: true, filename: true, mimeType: true, sizeBytes: true, createdAt: true } },
+      },
+    });
+    res.json(updated);
+  }
+);
+
 waterSourceLogsRouter.delete(
   "/:logId",
   requireRole("admin", "project_manager"),

@@ -5,6 +5,7 @@ import { Login } from "./auth/Login";
 import { MapView } from "./components/MapView";
 import { Sidebar } from "./components/Sidebar";
 import { UserManagement } from "./components/UserManagement";
+import { WaterAvailabilityReport } from "./components/WaterAvailabilityReport";
 import { emptyState, type AddState } from "./components/AddWaterSource";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import type { MapLayers, WatershedNode } from "./types";
@@ -25,6 +26,7 @@ export function App() {
   });
   const [addState, setAddState] = useState<AddState | null>(null);
   const [showUserMgmt, setShowUserMgmt] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => { setSidebarOpen(!isMobile); }, [isMobile]);
 
@@ -80,6 +82,7 @@ export function App() {
           addModeActive={addState !== null}
           isAdmin={user.role === "admin"}
           onOpenUserManagement={() => setShowUserMgmt(true)}
+          onOpenReport={() => setShowReport(true)}
         />
         <div style={layout.mapWrap}>
           <MapView
@@ -93,6 +96,9 @@ export function App() {
 
       {showUserMgmt && user.role === "admin" && (
         <UserManagement currentUserId={user.id} onClose={() => setShowUserMgmt(false)} />
+      )}
+      {showReport && (
+        <WaterAvailabilityReport onClose={() => setShowReport(false)} />
       )}
     </div>
   );

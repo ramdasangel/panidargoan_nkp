@@ -83,6 +83,8 @@
     "update": "अद्ययावत",
     "addLog": "नोंद जोडा",
     "saveLog": "नोंद साठवा",
+    "editLog": "नोंद संपादन",
+    "updateLog": "नोंद अद्ययावत",
     "loggedAt": "नोंद वेळ",
     "flow": "प्रवाह",
     "flowShort": "प्रवाह",
@@ -206,6 +208,26 @@
     "link_direct_watershed": "थेट",
     "link_water_source_in_subtree": "जलस्रोताद्वारे",
     "link_village_overlap": "गावाद्वारे"
+  },
+  "report": {
+    "waterAvail": {
+      "menu": "जल उपलब्धता अहवाल",
+      "title": "जल उपलब्धता — एकत्रित",
+      "groupBy": "गटवार",
+      "byTaluka": "तालुका",
+      "byWatershed": "पाणलोट",
+      "taluka": "तालुका",
+      "watershed": "पाणलोट",
+      "sourceCount": "स्रोत",
+      "types": "प्रकारानुसार",
+      "logged": "नोंदलेले",
+      "totalFlow": "एकूण प्रवाह (m³/दिन)",
+      "avgLevel": "सरासरी पातळी (सेमी)",
+      "avgPh": "सरासरी pH",
+      "lastObs": "अलीकडील नोंद",
+      "sources": "स्रोत",
+      "empty": "अद्याप कोणतेही स्वहस्ते जलस्रोत नाहीत. नकाशावरून जोडा."
+    }
   },
   "lang": {
     "en": "English",

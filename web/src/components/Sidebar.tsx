@@ -16,13 +16,14 @@ interface Props {
   addModeActive: boolean;
   isAdmin: boolean;
   onOpenUserManagement: () => void;
+  onOpenReport: () => void;
 }
 
 export function Sidebar(props: Props) {
   const {
     selectedId, onSelect, open, onToggle, isMobile,
     layers, onLayersChange, onOpenAddWaterSource, addModeActive,
-    isAdmin, onOpenUserManagement,
+    isAdmin, onOpenUserManagement, onOpenReport,
   } = props;
   const { t } = useTranslation();
   const [tree, setTree] = useState<WatershedNode[] | null>(null);
@@ -123,6 +124,14 @@ export function Sidebar(props: Props) {
             <span className="pdg-menu-action-icon">＋</span>
             <span>{t("addWS.openButton")}</span>
             {addModeActive && <span className="pdg-menu-action-hint">{t("sidebar.inProgress")}</span>}
+          </button>
+          <button
+            className="pdg-menu-action pdg-menu-action-secondary"
+            onClick={() => { onOpenReport(); if (isMobile) onToggle(); }}
+            type="button"
+          >
+            <span className="pdg-menu-action-icon">📊</span>
+            <span>{t("report.waterAvail.menu", { defaultValue: "Water availability report" })}</span>
           </button>
         </Section>
 
