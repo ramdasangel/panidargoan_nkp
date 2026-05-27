@@ -10,17 +10,20 @@ export interface LocationFocus {
   bbox?: [number, number, number, number];
 }
 
-// Local-DB search result shape returned by /api/search.
-// (Replaces public Nominatim, which was unreliable: 503 from rate limits
-// and irrelevant matches outside the project area.)
+// Two sources merged into one suggestion list:
+// 1. /api/search (Village/Taluka/Watershed from PostGIS) — instant
+// 2. Google Places Autocomplete + Geocoding — global fallback
+// Local results appear first; Google results are bias-restricted to Maharashtra
+// (countrycodes='in') for relevance.
 interface SearchHit {
-  type: "village" | "taluka" | "watershed";
+  source: "local" | "google";
+  type: string;           // "village" | "taluka" | "watershed" | google place type
   id: string;
   name: string;
   context?: string;
   lat: number;
   lng: number;
-  bbox?: [number, number, number, number]; // [south, west, north, east]
+  bbox?: [number, number, number, number];
 }
 
 interface Props {
@@ -39,9 +42,7 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
   const wrapRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Debounced search hitting our own /api/search backed by Village/Taluka/
-  // Watershed tables in PostGIS. Instant, reliable, and limited to project
-  // geo data (no irrelevant matches from worldwide OSM).
+  // Local DB lookup (instant)
   useEffect(() => {
     if (q.trim().length < 2) { setResults(null); return; }
     const timer = setTimeout(async () => {
@@ -50,11 +51,29 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
       abortRef.current = ac;
       setLoading(true);
       try {
-        const data = await api<SearchHit[]>(
-          `/api/search?q=${encodeURIComponent(q.trim())}&limit=10`,
+        // 1. Local entities first
+        const local = await api<Array<{ type: string; id: string; name: string; context?: string; lat: number; lng: number; bbox?: [number, number, number, number] }>>(
+          `/api/search?q=${encodeURIComponent(q.trim())}&limit=8`,
           { signal: ac.signal }
         );
-        setResults(data);
+        const localHits: SearchHit[] = local.map((r) => ({
+          source: "local", type: r.type, id: r.id, name: r.name, context: r.context,
+          lat: r.lat, lng: r.lng, bbox: r.bbox,
+        }));
+
+        // 2. Google Places Autocomplete (only if google.maps is loaded)
+        const googleHits = await googleAutocomplete(q.trim(), ac.signal).catch(() => [] as SearchHit[]);
+
+        // Dedupe by name+lat,lng so we don't show "Manchar" twice
+        const merged: SearchHit[] = [...localHits];
+        for (const g of googleHits) {
+          const dup = merged.some((m) =>
+            m.name.toLowerCase() === g.name.toLowerCase() &&
+            Math.abs(m.lat - g.lat) < 0.01 && Math.abs(m.lng - g.lng) < 0.01
+          );
+          if (!dup) merged.push(g);
+        }
+        setResults(merged.slice(0, 12));
         setHighlight(0);
         setOpen(true);
       } catch (e) {
@@ -62,7 +81,7 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 300);
     return () => clearTimeout(timer);
   }, [q]);
 
@@ -80,9 +99,18 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
     };
   }, [open]);
 
-  function pick(r: SearchHit) {
-    const focus: LocationFocus = { lat: r.lat, lng: r.lng, zoom: 14 };
-    if (r.bbox) focus.bbox = r.bbox;
+  async function pick(r: SearchHit) {
+    let lat = r.lat;
+    let lng = r.lng;
+    let bbox = r.bbox;
+    if (r.source === "google") {
+      // Resolve place_id → coords + viewport. Spend one Geocoding API call.
+      const resolved = await resolveGooglePlace(r.id);
+      if (!resolved) return;
+      lat = resolved.lat; lng = resolved.lng; bbox = resolved.bbox;
+    }
+    const focus: LocationFocus = { lat, lng, zoom: 14 };
+    if (bbox) focus.bbox = bbox;
     onLocate(focus);
     setOpen(false);
     setQ(r.context ? `${r.name}, ${r.context}` : r.name);
@@ -138,12 +166,15 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
           {results.length === 0 && <li className="pdg-search-empty">{t("search.noResults")}</li>}
           {results.map((r, i) => (
             <li
-              key={r.id}
+              key={`${r.source}-${r.id}`}
               className={`pdg-search-item ${i === highlight ? "highlight" : ""}`}
               onMouseDown={(e) => { e.preventDefault(); pick(r); }}
               onMouseEnter={() => setHighlight(i)}
             >
-              <div className="pdg-search-item-main">{r.name}</div>
+              <div className="pdg-search-item-main">
+                {r.name}
+                {r.source === "google" && <span style={{ marginLeft: 6, fontSize: 10, color: "#888" }}>Google</span>}
+              </div>
               <div className="pdg-search-item-sub">
                 {r.type}{r.context ? ` · ${r.context}` : ""}
               </div>
@@ -153,4 +184,66 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
       )}
     </div>
   );
+}
+
+// -----------------------------------------------------------------------------
+// Google Places + Geocoding helper
+// -----------------------------------------------------------------------------
+//
+// Two-step flow: Autocomplete gives us place predictions (cheap session token
+// pricing); Geocoder resolves the selected prediction's place_id to lat/lng +
+// viewport bbox. We do step 1 here and defer geocoding to pick() so we only
+// pay for what the user actually selects.
+
+async function googleAutocomplete(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+  if (typeof google === "undefined" || !google.maps?.places) return [];
+  const service = new google.maps.places.AutocompleteService();
+  const session = new google.maps.places.AutocompleteSessionToken();
+  return new Promise<SearchHit[]>((resolve) => {
+    if (signal.aborted) { resolve([]); return; }
+    service.getPlacePredictions(
+      {
+        input: query,
+        sessionToken: session,
+        componentRestrictions: { country: "in" },
+        // Bias toward Maharashtra (rough bbox)
+        locationBias: new google.maps.LatLngBounds(
+          { lat: 15.6, lng: 72.6 },
+          { lat: 22.0, lng: 80.9 }
+        ),
+      },
+      (preds) => {
+        if (!preds) return resolve([]);
+        resolve(preds.map((p): SearchHit => ({
+          source: "google",
+          type:    (p.types && p.types[0]) || "place",
+          id:      p.place_id,
+          name:    p.structured_formatting?.main_text || p.description,
+          context: p.structured_formatting?.secondary_text || "",
+          lat: 0, lng: 0,                  // resolved later by geocoder
+        })));
+      }
+    );
+  });
+}
+
+/** Resolve a Google place_id to coordinates + viewport bbox. */
+async function resolveGooglePlace(placeId: string): Promise<{ lat: number; lng: number; bbox?: [number, number, number, number] } | null> {
+  if (typeof google === "undefined" || !google.maps?.Geocoder) return null;
+  const geo = new google.maps.Geocoder();
+  return new Promise((resolve) => {
+    geo.geocode({ placeId }, (results, status) => {
+      if (status !== "OK" || !results || !results[0]) { resolve(null); return; }
+      const r = results[0];
+      const loc = r.geometry.location;
+      const vp  = r.geometry.viewport;
+      resolve({
+        lat: loc.lat(),
+        lng: loc.lng(),
+        bbox: vp
+          ? [vp.getSouthWest().lat(), vp.getSouthWest().lng(), vp.getNorthEast().lat(), vp.getNorthEast().lng()]
+          : undefined,
+      });
+    });
+  });
 }

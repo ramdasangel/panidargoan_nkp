@@ -32,11 +32,7 @@
     "layerWatersheds": "Watersheds",
     "layerWaterSources": "Water sources",
     "layerWaterSourcesManual": "Water sources (manually mapped)",
-    "layerWaterSourcesBhuvan": "Water sources (Bhuvan auto)",
-    "layerBhuvanWaterbodies": "Bhuvan waterbodies",
-    "layerBhuvanWatersheds": "Bhuvan watershed boundaries",
-    "layerBhuvanSubbasins": "Bhuvan sub-basins",
-    "basemap": "Base map"
+    "layerWaterStreams": "Streams (HydroRIVERS)"
   },
   "addWS": {
     "openButton": "Add water source",

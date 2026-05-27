@@ -18,10 +18,7 @@ export interface MapLayers {
   talukas: boolean;
   watersheds: boolean;
   waterSourcesManual: boolean;
-  waterSourcesBhuvan: boolean;
-  bhuvanWaterbodies: boolean;
-  bhuvanWatersheds: boolean;
-  bhuvanSubbasins: boolean;
+  waterStreams: boolean;
 }
 
 export type WaterSourceOrigin = "manual" | "osm" | "imported";

@@ -32,11 +32,7 @@
     "layerWatersheds": "पाणलोट",
     "layerWaterSources": "पाणी स्रोत",
     "layerWaterSourcesManual": "पाणी स्रोत (स्वहस्ते नकाशा)",
-    "layerWaterSourcesBhuvan": "पाणी स्रोत (भुवन स्वयं)",
-    "layerBhuvanWaterbodies": "भुवन जलाशय",
-    "layerBhuvanWatersheds": "भुवन पाणलोट सीमा",
-    "layerBhuvanSubbasins": "भुवन उप-खोरे",
-    "basemap": "बेस नकाशा"
+    "layerWaterStreams": "ओहळ (HydroRIVERS)"
   },
   "addWS": {
     "openButton": "जलस्रोत जोडा",

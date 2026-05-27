@@ -1,12 +1,15 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { useMapEvents, CircleMarker, Polyline, Polygon } from "react-leaflet";
-import L, { type LatLngTuple } from "leaflet";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { Marker, Polyline, Polygon, useGoogleMap } from "@react-google-maps/api";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/client";
 import type { WaterSourceType } from "../types";
 import { buildKml, parseKml, type GeometryKind } from "../kml";
 
 export type { GeometryKind };
+
+// In the Google Maps rewrite we keep the historical [lat, lng] tuple shape
+// internally so KML helpers, distance/area math, and save() keep working.
+export type LatLngTuple = [number, number];
 
 export interface AddState {
   type: WaterSourceType;
@@ -56,62 +59,107 @@ interface Props {
   onSaved: () => void;
 }
 
-/** Drawing layer: lives inside <MapContainer>, captures clicks and renders preview. */
+/** Drawing layer: lives inside <GoogleMap>, captures clicks and renders preview. */
 export function AddWaterSourceLayer({ state, setState }: Props) {
-  useMapEvents({
-    click(e) {
+  const map = useGoogleMap();
+
+  // Attach a click listener to the map for the lifetime of the layer.
+  useEffect(() => {
+    if (!map) return;
+    const listener = map.addListener("click", (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
       if (state.inputMode !== "draw") return;
-      const pt: LatLngTuple = [e.latlng.lat, e.latlng.lng];
+      const pt: LatLngTuple = [e.latLng.lat(), e.latLng.lng()];
       setState((s) => {
         if (!s) return s;
         if (s.geomKind === "Point") return { ...s, points: [pt] };
         return { ...s, points: [...s.points, pt] };
       });
-    },
-  });
+    });
+    return () => listener.remove();
+  }, [map, state.inputMode, state.geomKind, setState]);
 
   if (state.points.length === 0) return null;
 
+  // Convert internal [lat, lng] tuples to Google LatLngLiteral
+  const toLL = (p: LatLngTuple): google.maps.LatLngLiteral => ({ lat: p[0], lng: p[1] });
+  const path = state.points.map(toLL);
+
+  const PINK = "#d81b60";
+  const dotIcon = {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 5,
+    fillColor: PINK,
+    fillOpacity: 1,
+    strokeColor: PINK,
+    strokeWeight: 1,
+  } as google.maps.Symbol;
+
   if (state.geomKind === "Point") {
     return (
-      <CircleMarker
-        center={state.points[0]}
-        radius={8}
-        pathOptions={{ color: "#fff", weight: 2, fillColor: "#d81b60", fillOpacity: 0.9 }}
+      <Marker
+        position={path[0]}
+        icon={{
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: PINK,
+          fillOpacity: 0.9,
+          strokeColor: "#fff",
+          strokeWeight: 2,
+        }}
       />
     );
   }
 
-  if (state.geomKind === "LineString" && state.points.length >= 1) {
+  if (state.geomKind === "LineString") {
     return (
       <>
-        <Polyline positions={state.points} pathOptions={{ color: "#d81b60", weight: 4, dashArray: "6 4" }} />
-        {state.points.map((p, i) => (
-          <CircleMarker key={i} center={p} radius={4} pathOptions={{ color: "#d81b60", fillColor: "#d81b60", fillOpacity: 1 }} />
-        ))}
+        <Polyline
+          path={path}
+          options={{
+            strokeColor: PINK, strokeWeight: 4, strokeOpacity: 0,
+            icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 4 }, offset: "0", repeat: "10px" }],
+          }}
+        />
+        {path.map((p, i) => <Marker key={i} position={p} icon={dotIcon} />)}
       </>
     );
   }
 
-  if (state.geomKind === "Polygon" && state.points.length >= 1) {
-    return (
-      <>
-        {state.points.length >= 3 ? (
-          <Polygon
-            positions={state.points}
-            pathOptions={{ color: "#d81b60", weight: 2, dashArray: "6 4", fillColor: "#d81b60", fillOpacity: 0.2 }}
-          />
-        ) : (
-          <Polyline positions={state.points} pathOptions={{ color: "#d81b60", weight: 2, dashArray: "6 4" }} />
-        )}
-        {state.points.map((p, i) => (
-          <CircleMarker key={i} center={p} radius={4} pathOptions={{ color: "#d81b60", fillColor: "#d81b60", fillOpacity: 1 }} />
-        ))}
-      </>
-    );
-  }
+  // Polygon
+  return (
+    <>
+      {state.points.length >= 3 ? (
+        <Polygon
+          paths={path}
+          options={{
+            strokeColor: PINK, strokeWeight: 2, strokeOpacity: 0.95,
+            fillColor: PINK, fillOpacity: 0.2,
+          }}
+        />
+      ) : (
+        <Polyline
+          path={path}
+          options={{
+            strokeColor: PINK, strokeWeight: 2, strokeOpacity: 0,
+            icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 4 }, offset: "0", repeat: "10px" }],
+          }}
+        />
+      )}
+      {path.map((p, i) => <Marker key={i} position={p} icon={dotIcon} />)}
+    </>
+  );
+}
 
-  return null;
+/** Haversine distance between two [lat, lng] tuples, in metres. */
+function haversineMeters(a: LatLngTuple, b: LatLngTuple): number {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]); const lat2 = toRad(b[0]);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
 }
 
 function metric(state: AddState): string {
@@ -122,12 +170,11 @@ function metric(state: AddState): string {
   }
   if (state.geomKind === "LineString") {
     if (state.points.length < 2) return `${state.points.length} pt`;
-    const latlngs = state.points.map((p) => L.latLng(p[0], p[1]));
     let total = 0;
-    for (let i = 1; i < latlngs.length; i++) total += latlngs[i - 1].distanceTo(latlngs[i]);
+    for (let i = 1; i < state.points.length; i++) total += haversineMeters(state.points[i - 1], state.points[i]);
     return total >= 1000 ? `${(total / 1000).toFixed(2)} km` : `${Math.round(total)} m`;
   }
-  // Polygon — show vertex count + area via shoelace approximation
+  // Polygon — shoelace approximation
   if (state.points.length < 3) return `${state.points.length} pts`;
   const R = 6371000;
   let sum = 0;

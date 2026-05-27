@@ -17,12 +17,10 @@ export function App() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [layers, setLayers] = useState<MapLayers>({
-    talukas: true, watersheds: true,
+    talukas: true,
+    watersheds: true,
     waterSourcesManual: true,
-    waterSourcesBhuvan: true,
-    bhuvanWaterbodies: false,
-    bhuvanWatersheds: false,
-    bhuvanSubbasins: false,
+    waterStreams: true,
   });
   const [addState, setAddState] = useState<AddState | null>(null);
   const [showUserMgmt, setShowUserMgmt] = useState(false);

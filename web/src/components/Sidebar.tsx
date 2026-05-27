@@ -49,8 +49,8 @@ export function Sidebar(props: Props) {
   const overlays: Array<[keyof MapLayers, string]> = [
     ["talukas", t("map.layerTalukas")],
     ["watersheds", t("map.layerWatersheds")],
+    ["waterStreams", t("map.layerWaterStreams")],
     ["waterSourcesManual", t("map.layerWaterSourcesManual")],
-    ["waterSourcesBhuvan", t("map.layerWaterSourcesBhuvan")],
   ];
 
   const classes = ["pdg-sidebar", open ? "open" : "folded"].join(" ");
@@ -81,32 +81,6 @@ export function Sidebar(props: Props) {
               <span>{label}</span>
             </label>
           ))}
-          <div className="pdg-menu-divider" />
-          <div className="pdg-section-sublabel">{t("map.basemap")}</div>
-          <label className="pdg-menu-row">
-            <input
-              type="checkbox"
-              checked={layers.bhuvanWaterbodies}
-              onChange={(e) => onLayersChange({ ...layers, bhuvanWaterbodies: e.target.checked })}
-            />
-            <span>{t("map.layerBhuvanWaterbodies")}</span>
-          </label>
-          <label className="pdg-menu-row">
-            <input
-              type="checkbox"
-              checked={layers.bhuvanWatersheds}
-              onChange={(e) => onLayersChange({ ...layers, bhuvanWatersheds: e.target.checked })}
-            />
-            <span>{t("map.layerBhuvanWatersheds")}</span>
-          </label>
-          <label className="pdg-menu-row">
-            <input
-              type="checkbox"
-              checked={layers.bhuvanSubbasins}
-              onChange={(e) => onLayersChange({ ...layers, bhuvanSubbasins: e.target.checked })}
-            />
-            <span>{t("map.layerBhuvanSubbasins")}</span>
-          </label>
         </Section>
 
         {/* ACTIONS */}
