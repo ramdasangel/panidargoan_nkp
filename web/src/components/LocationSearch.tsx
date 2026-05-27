@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../api/client";
 
 export interface LocationFocus {
   lat: number;
@@ -9,22 +10,17 @@ export interface LocationFocus {
   bbox?: [number, number, number, number];
 }
 
-interface NominatimResult {
-  place_id: number;
-  lat: string;
-  lon: string;
-  display_name: string;
-  type: string;
-  class: string;
-  boundingbox?: [string, string, string, string];
-  address?: {
-    village?: string;
-    town?: string;
-    city?: string;
-    county?: string;
-    state_district?: string;
-    state?: string;
-  };
+// Local-DB search result shape returned by /api/search.
+// (Replaces public Nominatim, which was unreliable: 503 from rate limits
+// and irrelevant matches outside the project area.)
+interface SearchHit {
+  type: "village" | "taluka" | "watershed";
+  id: string;
+  name: string;
+  context?: string;
+  lat: number;
+  lng: number;
+  bbox?: [number, number, number, number]; // [south, west, north, east]
 }
 
 interface Props {
@@ -36,14 +32,16 @@ interface Props {
 export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Props) {
   const { t } = useTranslation();
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<NominatimResult[] | null>(null);
+  const [results, setResults] = useState<SearchHit[] | null>(null);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Debounced search
+  // Debounced search hitting our own /api/search backed by Village/Taluka/
+  // Watershed tables in PostGIS. Instant, reliable, and limited to project
+  // geo data (no irrelevant matches from worldwide OSM).
   useEffect(() => {
     if (q.trim().length < 2) { setResults(null); return; }
     const timer = setTimeout(async () => {
@@ -52,18 +50,10 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
       abortRef.current = ac;
       setLoading(true);
       try {
-        const url =
-          "https://nominatim.openstreetmap.org/search?" +
-          new URLSearchParams({
-            q: q.trim(),
-            format: "json",
-            limit: "8",
-            countrycodes: "in",
-            addressdetails: "1",
-          }).toString();
-        const res = await fetch(url, { signal: ac.signal, headers: { Accept: "application/json" } });
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as NominatimResult[];
+        const data = await api<SearchHit[]>(
+          `/api/search?q=${encodeURIComponent(q.trim())}&limit=10`,
+          { signal: ac.signal }
+        );
         setResults(data);
         setHighlight(0);
         setOpen(true);
@@ -72,7 +62,7 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
       } finally {
         setLoading(false);
       }
-    }, 400);
+    }, 250);
     return () => clearTimeout(timer);
   }, [q]);
 
@@ -90,24 +80,12 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
     };
   }, [open]);
 
-  function pick(r: NominatimResult) {
-    const lat = parseFloat(r.lat);
-    const lng = parseFloat(r.lon);
-    const focus: LocationFocus = { lat, lng, zoom: 14 };
-    if (r.boundingbox) {
-      const [s, n, w, e] = r.boundingbox.map(parseFloat);
-      focus.bbox = [s, w, n, e]; // [southLat, westLng, northLat, eastLng]
-    }
+  function pick(r: SearchHit) {
+    const focus: LocationFocus = { lat: r.lat, lng: r.lng, zoom: 14 };
+    if (r.bbox) focus.bbox = r.bbox;
     onLocate(focus);
     setOpen(false);
-    setQ(label(r));
-  }
-
-  function label(r: NominatimResult): string {
-    const a = r.address || {};
-    const name = a.village || a.town || a.city || r.display_name.split(",")[0];
-    const region = [a.county || a.state_district, a.state].filter(Boolean).join(", ");
-    return region ? `${name}, ${region}` : name;
+    setQ(r.context ? `${r.name}, ${r.context}` : r.name);
   }
 
   function onKey(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -160,13 +138,15 @@ export function LocationSearch({ onLocate, onCenterDevice, devicePending }: Prop
           {results.length === 0 && <li className="pdg-search-empty">{t("search.noResults")}</li>}
           {results.map((r, i) => (
             <li
-              key={r.place_id}
+              key={r.id}
               className={`pdg-search-item ${i === highlight ? "highlight" : ""}`}
               onMouseDown={(e) => { e.preventDefault(); pick(r); }}
               onMouseEnter={() => setHighlight(i)}
             >
-              <div className="pdg-search-item-main">{label(r)}</div>
-              <div className="pdg-search-item-sub">{r.type}</div>
+              <div className="pdg-search-item-main">{r.name}</div>
+              <div className="pdg-search-item-sub">
+                {r.type}{r.context ? ` · ${r.context}` : ""}
+              </div>
             </li>
           ))}
         </ul>
