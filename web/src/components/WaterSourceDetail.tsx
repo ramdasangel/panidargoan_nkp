@@ -64,6 +64,7 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
   const [edit, setEdit] = useState<MasterRecord | null>(null);
   const [logDraft, setLogDraft] = useState<typeof blankLog>(blankLog);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
   async function refresh() {
     try {
@@ -101,31 +102,65 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
     finally { setBusy(false); }
   }
 
+  function startEditLog(l: LogRecord) {
+    const fmt = (n: number | null) => (n == null ? "" : String(n));
+    setLogDraft({
+      // datetime-local needs YYYY-MM-DDTHH:MM (no seconds, no Z)
+      loggedAt: new Date(l.loggedAt).toISOString().slice(0, 16),
+      flowM3PerDay: fmt(l.flowM3PerDay),
+      waterLevelCm: fmt(l.waterLevelCm),
+      phLevel: fmt(l.phLevel),
+      tdsPpm: fmt(l.tdsPpm),
+      turbidityNtu: fmt(l.turbidityNtu),
+      temperatureC: fmt(l.temperatureC),
+      condition: l.condition ?? "",
+      notes: l.notes ?? "",
+    });
+    setEditingLogId(l.id);
+    setMode("log");
+  }
+
   async function saveLog() {
     setBusy(true); setError(null);
     try {
+      // For PUT we send nulls for cleared fields so the server overwrites;
+      // for POST we omit empty fields (the schema accepts optional).
+      const isEdit = !!editingLogId;
       const body: Record<string, unknown> = {};
       const numFields = ["flowM3PerDay", "waterLevelCm", "phLevel", "tdsPpm", "turbidityNtu", "temperatureC"] as const;
       for (const k of numFields) {
         const v = logDraft[k];
-        if (v !== "" && v !== null) body[k] = Number(v);
+        if (v === "" || v === null) {
+          if (isEdit) body[k] = null;
+        } else {
+          body[k] = Number(v);
+        }
       }
-      if (logDraft.condition.trim()) body.condition = logDraft.condition.trim();
-      if (logDraft.notes.trim())     body.notes     = logDraft.notes.trim();
-      if (logDraft.loggedAt)         body.loggedAt  = new Date(logDraft.loggedAt).toISOString();
+      body.condition = logDraft.condition.trim() ? logDraft.condition.trim() : (isEdit ? null : undefined);
+      body.notes     = logDraft.notes.trim()     ? logDraft.notes.trim()     : (isEdit ? null : undefined);
+      if (body.condition === undefined) delete body.condition;
+      if (body.notes     === undefined) delete body.notes;
+      if (logDraft.loggedAt) body.loggedAt = new Date(logDraft.loggedAt).toISOString();
 
-      const created = await api<{ id: string }>(`/api/water-sources/${waterSourceId}/logs`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      const logId = editingLogId ?? (await api<{ id: string }>(
+        `/api/water-sources/${waterSourceId}/logs`,
+        { method: "POST", body: JSON.stringify(body) }
+      )).id;
 
-      // Upload attachments now that we have the log id
+      if (isEdit) {
+        await api(`/api/water-sources/${waterSourceId}/logs/${editingLogId}`, {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+      }
+
+      // Upload any newly-attached files (works for both POST and PUT)
       if (pendingFiles.length > 0) {
         const form = new FormData();
         for (const f of pendingFiles) form.append("files", f);
         const token = localStorage.getItem("pdg.token");
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/water-sources/${waterSourceId}/logs/${created.id}/attachments`,
+          `${import.meta.env.VITE_API_URL ?? ""}/api/water-sources/${waterSourceId}/logs/${logId}/attachments`,
           { method: "POST", body: form, headers: token ? { Authorization: `Bearer ${token}` } : undefined }
         );
         if (!res.ok) {
@@ -136,6 +171,7 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
 
       setLogDraft(blankLog);
       setPendingFiles([]);
+      setEditingLogId(null);
       setMode("view");
       await refresh();
     } catch (e) { setError(String(e)); }
@@ -232,9 +268,12 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
       {/* LOG section */}
       <section style={styles.section}>
         <div style={styles.sectionHead}>
-          <h4 style={styles.h4}>{t("wsDetail.logs", { count: logs?.length ?? 0 })}</h4>
+          <h4 style={styles.h4}>
+            {t("wsDetail.logs", { count: logs?.length ?? 0 })}
+            {editingLogId && <span style={styles.muted}> · {t("wsDetail.editLog", { defaultValue: "editing" })}</span>}
+          </h4>
           {mode !== "log" && (
-            <button onClick={() => setMode("log")} style={styles.actionBtnPrimary} type="button">
+            <button onClick={() => { setLogDraft(blankLog); setEditingLogId(null); setMode("log"); }} style={styles.actionBtnPrimary} type="button">
               ＋ {t("wsDetail.addLog")}
             </button>
           )}
@@ -288,8 +327,10 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
               )}
             </Field>
             <div style={styles.formActions}>
-              <button onClick={() => { setMode("view"); setLogDraft(blankLog); setPendingFiles([]); }} disabled={busy} style={styles.cancelBtn} type="button">{t("addWS.cancel")}</button>
-              <button onClick={saveLog} disabled={busy} style={styles.saveBtn} type="button">{busy ? t("addWS.saving") : t("wsDetail.saveLog")}</button>
+              <button onClick={() => { setMode("view"); setLogDraft(blankLog); setPendingFiles([]); setEditingLogId(null); }} disabled={busy} style={styles.cancelBtn} type="button">{t("addWS.cancel")}</button>
+              <button onClick={saveLog} disabled={busy} style={styles.saveBtn} type="button">
+                {busy ? t("addWS.saving") : (editingLogId ? t("wsDetail.updateLog", { defaultValue: "Update log" }) : t("wsDetail.saveLog"))}
+              </button>
             </div>
           </div>
         )}
@@ -304,7 +345,10 @@ export function WaterSourceDetail({ waterSourceId, onClose, onUpdated }: Props) 
               <li key={l.id} style={styles.logItem}>
                 <div style={styles.logHead}>
                   <strong style={styles.logDate}>{fmtDate(l.loggedAt)} {new Date(l.loggedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</strong>
-                  <button onClick={() => deleteLog(l.id)} style={styles.logDelBtn} aria-label="Delete log" type="button">✕</button>
+                  <span style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => startEditLog(l)} style={styles.logEditBtn} aria-label="Edit log" title={t("wsDetail.editLog", { defaultValue: "Edit" })} type="button">✎</button>
+                    <button onClick={() => deleteLog(l.id)} style={styles.logDelBtn} aria-label="Delete log" type="button">✕</button>
+                  </span>
                 </div>
                 <div style={styles.logBy}>{l.loggedBy?.name ?? l.loggedBy?.email ?? "—"}</div>
                 <div style={styles.logStats}>
@@ -402,6 +446,7 @@ const styles: Record<string, React.CSSProperties> = {
   logHead: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   logDate: { fontSize: 12 },
   logDelBtn: { background: "none", border: 0, color: "#bbb", cursor: "pointer", fontSize: 14, padding: 0 },
+  logEditBtn: { background: "none", border: 0, color: "#888", cursor: "pointer", fontSize: 14, padding: 0 } as React.CSSProperties,
   logBy: { fontSize: 11, color: "#888", marginTop: 1 },
   logStats: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 },
   statPill: { display: "inline-flex", gap: 4, background: "#f5f5f5", padding: "2px 8px", borderRadius: 10, fontSize: 11, alignItems: "baseline" },

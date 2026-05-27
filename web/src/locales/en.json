@@ -83,6 +83,8 @@
     "update": "Update",
     "addLog": "Add log",
     "saveLog": "Save log",
+    "editLog": "Edit log",
+    "updateLog": "Update log",
     "loggedAt": "Logged at",
     "flow": "Discharge / flow",
     "flowShort": "Flow",
@@ -206,6 +208,26 @@
     "link_direct_watershed": "Direct",
     "link_water_source_in_subtree": "Via water source",
     "link_village_overlap": "Via village"
+  },
+  "report": {
+    "waterAvail": {
+      "menu": "Water availability report",
+      "title": "Water availability — aggregated",
+      "groupBy": "Group by",
+      "byTaluka": "Taluka",
+      "byWatershed": "Watershed",
+      "taluka": "Taluka",
+      "watershed": "Watershed",
+      "sourceCount": "Sources",
+      "types": "By type",
+      "logged": "Logged",
+      "totalFlow": "Total flow (m³/d)",
+      "avgLevel": "Avg level (cm)",
+      "avgPh": "Avg pH",
+      "lastObs": "Last observation",
+      "sources": "sources",
+      "empty": "No manual water sources yet. Add some via the map to populate this report."
+    }
   },
   "lang": {
     "en": "English",

@@ -167,3 +167,131 @@ reportsRouter.get("/watersheds/cost-summary", async (_req, res) => {
   });
   res.json(payload);
 });
+
+// -----------------------------------------------------------------------------
+// Water availability aggregation
+// -----------------------------------------------------------------------------
+//
+// Aggregates manual water sources + their latest log entries across either
+// Taluka or Watershed groupings. Returns one row per group with:
+//   sourceCount        — number of manual water sources in this group
+//   sourceCountByType  — JSON map of type -> count (well, borewell, etc.)
+//   loggedSourceCount  — sources that have at least one log
+//   totalFlowM3PerDay  — sum of latest flow across all sources
+//   avgWaterLevelCm    — average of latest water level across sources
+//   avgPh              — average of latest pH
+//   latestObservationAt — most recent log timestamp in this group
+//
+// groupBy=taluka  → spatial join WaterSource.geom WITHIN Taluka.boundary
+// groupBy=watershed → join on WaterSource.watershedId
+//
+// Only counts source='manual' rows; OSM/imported lines are excluded since
+// they aren't field-observed.
+
+reportsRouter.get("/water-availability", async (req, res) => {
+  const groupBy = req.query.groupBy === "watershed" ? "watershed" : "taluka";
+  const key = `reports:water-availability:${groupBy}`;
+
+  type AggRow = {
+    group_id: string;
+    group_name: string;
+    group_kind: string | null;
+    source_count: bigint;
+    source_count_by_type: Record<string, number> | string;
+    logged_source_count: bigint;
+    total_flow_m3_per_day: number | string | null;
+    avg_water_level_cm: number | string | null;
+    avg_ph: number | string | null;
+    latest_observation_at: Date | null;
+  };
+
+  const payload = await cached(key, REPORT_TTL, async () => {
+    const rows = groupBy === "taluka"
+      ? await prisma.$queryRawUnsafe<AggRow[]>(`
+          WITH latest AS (
+            SELECT DISTINCT ON ("waterSourceId")
+              "waterSourceId", "loggedAt", "flowM3PerDay", "waterLevelCm", "phLevel"
+            FROM "WaterSourceLog"
+            ORDER BY "waterSourceId", "loggedAt" DESC
+          ),
+          src AS (
+            SELECT ws.id, ws.type::text AS type, ws.geom,
+                   l."loggedAt", l."flowM3PerDay", l."waterLevelCm", l."phLevel"
+              FROM "WaterSource" ws
+              LEFT JOIN latest l ON l."waterSourceId" = ws.id
+             WHERE ws.source = 'manual'
+          )
+          SELECT t.id  AS group_id,
+                 t.name AS group_name,
+                 'taluka' AS group_kind,
+                 COUNT(src.id)::bigint AS source_count,
+                 COALESCE(
+                   jsonb_object_agg(src.type, type_count) FILTER (WHERE src.type IS NOT NULL),
+                   '{}'::jsonb
+                 ) AS source_count_by_type,
+                 COUNT(src."loggedAt")::bigint AS logged_source_count,
+                 SUM(src."flowM3PerDay")            AS total_flow_m3_per_day,
+                 AVG(src."waterLevelCm")            AS avg_water_level_cm,
+                 AVG(src."phLevel")                 AS avg_ph,
+                 MAX(src."loggedAt")                AS latest_observation_at
+            FROM "Taluka" t
+            LEFT JOIN LATERAL (
+              SELECT s.id, s.type, s."loggedAt", s."flowM3PerDay", s."waterLevelCm", s."phLevel",
+                     COUNT(*) OVER (PARTITION BY s.type) AS type_count
+                FROM src s
+               WHERE ST_Within(s.geom::geometry, t.boundary::geometry)
+            ) src ON true
+           GROUP BY t.id, t.name
+           ORDER BY t.name`)
+      : await prisma.$queryRawUnsafe<AggRow[]>(`
+          WITH latest AS (
+            SELECT DISTINCT ON ("waterSourceId")
+              "waterSourceId", "loggedAt", "flowM3PerDay", "waterLevelCm", "phLevel"
+            FROM "WaterSourceLog"
+            ORDER BY "waterSourceId", "loggedAt" DESC
+          ),
+          src AS (
+            SELECT ws.id, ws.type::text AS type, ws."watershedId",
+                   l."loggedAt", l."flowM3PerDay", l."waterLevelCm", l."phLevel",
+                   COUNT(*) OVER (PARTITION BY ws."watershedId", ws.type) AS type_count
+              FROM "WaterSource" ws
+              LEFT JOIN latest l ON l."waterSourceId" = ws.id
+             WHERE ws.source = 'manual'
+          )
+          SELECT w.id  AS group_id,
+                 w.name AS group_name,
+                 w.kind AS group_kind,
+                 COUNT(src.id)::bigint AS source_count,
+                 COALESCE(
+                   jsonb_object_agg(src.type, src.type_count) FILTER (WHERE src.type IS NOT NULL),
+                   '{}'::jsonb
+                 ) AS source_count_by_type,
+                 COUNT(src."loggedAt")::bigint AS logged_source_count,
+                 SUM(src."flowM3PerDay")            AS total_flow_m3_per_day,
+                 AVG(src."waterLevelCm")            AS avg_water_level_cm,
+                 AVG(src."phLevel")                 AS avg_ph,
+                 MAX(src."loggedAt")                AS latest_observation_at
+            FROM "Watershed" w
+            LEFT JOIN src ON src."watershedId" = w.id
+           WHERE w.kind IN ('river_basin', 'sub_basin', 'watershed')
+           GROUP BY w.id, w.name, w.kind
+          HAVING COUNT(src.id) > 0
+           ORDER BY COUNT(src.id) DESC, w.name`);
+
+    return rows.map((r) => ({
+      groupId:   r.group_id,
+      groupName: r.group_name,
+      groupKind: r.group_kind,
+      sourceCount:       Number(r.source_count),
+      sourceCountByType: typeof r.source_count_by_type === "string"
+        ? JSON.parse(r.source_count_by_type) : r.source_count_by_type,
+      loggedSourceCount: Number(r.logged_source_count),
+      totalFlowM3PerDay: r.total_flow_m3_per_day == null ? null : Number(r.total_flow_m3_per_day),
+      avgWaterLevelCm:   r.avg_water_level_cm   == null ? null : Number(r.avg_water_level_cm),
+      avgPh:             r.avg_ph               == null ? null : Number(r.avg_ph),
+      latestObservationAt: r.latest_observation_at,
+    }));
+  });
+
+  res.json(payload);
+});
