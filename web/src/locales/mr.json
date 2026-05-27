@@ -138,7 +138,8 @@
     "kind_sub_catchment": "उप-जलग्रहण",
     "kind_watershed": "पाणलोट",
     "kind_sub_watershed": "उप-पाणलोट",
-    "kind_micro_watershed": "सूक्ष्म-पाणलोट"
+    "kind_micro_watershed": "सूक्ष्म-पाणलोट",
+    "rename": "नाव बदला"
   },
   "waterSource": {
     "capacity": "क्षमता",

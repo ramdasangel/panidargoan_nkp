@@ -1,11 +1,36 @@
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../db.js";
-import { requireAuth } from "../middleware/auth.js";
-import { cached } from "../cache.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
+import { cached, invalidate } from "../cache.js";
 
 export const watershedsRouter = Router();
 
 watershedsRouter.use(requireAuth);
+
+const patchSchema = z.object({ name: z.string().min(1).max(120).trim() });
+
+watershedsRouter.patch("/:id", requireRole("admin"), async (req, res) => {
+  const parsed = patchSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid body", details: parsed.error.flatten() });
+
+  const existing = await prisma.watershed.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, code: true },
+  });
+  if (!existing) return res.status(404).json({ error: "Watershed not found" });
+
+  const updated = await prisma.watershed.update({
+    where: { id: req.params.id },
+    data: { name: parsed.data.name },
+    select: { id: true, code: true, name: true, kind: true, level: true, parentId: true, areaKm2: true },
+  });
+
+  // Bust the cached tree + boundaries so the new name shows up immediately.
+  await invalidate("watersheds:*");
+  await invalidate("boundaries:watersheds*");
+  res.json(updated);
+});
 
 watershedsRouter.get("/", async (req, res) => {
   const parentId = typeof req.query.parentId === "string" ? req.query.parentId : undefined;

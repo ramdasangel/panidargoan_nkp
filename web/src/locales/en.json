@@ -138,7 +138,8 @@
     "kind_sub_catchment": "Sub-catchment",
     "kind_watershed": "Watershed",
     "kind_sub_watershed": "Sub-watershed",
-    "kind_micro_watershed": "Micro-watershed"
+    "kind_micro_watershed": "Micro-watershed",
+    "rename": "Rename"
   },
   "waterSource": {
     "capacity": "Capacity",

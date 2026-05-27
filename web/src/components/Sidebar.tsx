@@ -161,6 +161,15 @@ export function Sidebar(props: Props) {
                   selectedId={selectedId}
                   onSelect={(node) => { onSelect(node); if (isMobile) onToggle(); }}
                   costById={byId}
+                  isAdmin={isAdmin}
+                  onRenamed={(id, name) => {
+                    function patch(nodes: WatershedNode[]): WatershedNode[] {
+                      return nodes.map((x) =>
+                        x.id === id ? { ...x, name } : { ...x, children: patch(x.children) }
+                      );
+                    }
+                    setTree((prev) => (prev ? patch(prev) : prev));
+                  }}
                 />
               ))}
             </ul>
@@ -195,20 +204,48 @@ function Section({ title, open, onToggle, children }: { title: string; open: boo
 }
 
 function TreeNode({
-  node, depth, selectedId, onSelect, costById,
+  node, depth, selectedId, onSelect, costById, isAdmin, onRenamed,
 }: {
   node: WatershedNode;
   depth: number;
   selectedId: string | null;
   onSelect: (n: WatershedNode | null) => void;
   costById: Map<string, WatershedCostSummary>;
+  isAdmin: boolean;
+  onRenamed: (id: string, name: string) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(depth < 2);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(node.name);
+  const [saving, setSaving] = useState(false);
   const selected = selectedId === node.id;
   const hasChildren = node.children.length > 0;
   const kindLabel = t(`watershed.kind_${node.kind}`, { defaultValue: node.kind });
   const cost = costById.get(node.id);
+
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    setDraft(node.name);
+    setEditing(true);
+  }
+  async function commitEdit() {
+    const next = draft.trim();
+    if (!next || next === node.name) { setEditing(false); return; }
+    setSaving(true);
+    try {
+      await api(`/api/watersheds/${node.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: next }),
+      });
+      onRenamed(node.id, next);
+    } catch (err) {
+      console.error("rename failed", err);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }
 
   return (
     <li>
@@ -223,27 +260,64 @@ function TreeNode({
         >
           {open ? "▾" : "▸"}
         </span>
-        <span
-          onClick={() => onSelect(selected ? null : node)}
-          className="pdg-tree-label"
-          title={`${kindLabel}${node.areaKm2 ? ` · ${node.areaKm2} km²` : ""}`}
-        >
-          <div className="pdg-tree-main">
-            <span>{node.name}</span>
-            {cost && cost.actualInr > 0 && (
-              <span className="pdg-tree-badge">{inr(cost.actualInr, { compact: true })}</span>
-            )}
-          </div>
-          <div className="pdg-tree-kind">
-            {kindLabel}
-            {cost && cost.taskCount > 0 && ` · ${cost.taskCount} ${t("rollup.tasks")}`}
-          </div>
-        </span>
+        {editing ? (
+          <span className="pdg-tree-label" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitEdit();
+                else if (e.key === "Escape") setEditing(false);
+              }}
+              disabled={saving}
+              style={{ flex: 1, font: "inherit", padding: "2px 6px", border: "1px solid #1976d2", borderRadius: 3 }}
+            />
+            <button onClick={commitEdit} disabled={saving} className="pdg-tree-rename-btn" title="Save">✓</button>
+            <button onClick={() => setEditing(false)} disabled={saving} className="pdg-tree-rename-btn" title="Cancel">×</button>
+          </span>
+        ) : (
+          <span
+            onClick={() => onSelect(selected ? null : node)}
+            className="pdg-tree-label"
+            title={`${kindLabel}${node.areaKm2 ? ` · ${node.areaKm2} km²` : ""}`}
+          >
+            <div className="pdg-tree-main">
+              <span>{node.name}</span>
+              {cost && cost.actualInr > 0 && (
+                <span className="pdg-tree-badge">{inr(cost.actualInr, { compact: true })}</span>
+              )}
+              {isAdmin && (
+                <button
+                  className="pdg-tree-rename-icon"
+                  onClick={startEdit}
+                  title={t("watershed.rename", { defaultValue: "Rename" })}
+                  type="button"
+                >
+                  ✎
+                </button>
+              )}
+            </div>
+            <div className="pdg-tree-kind">
+              {kindLabel}
+              {cost && cost.taskCount > 0 && ` · ${cost.taskCount} ${t("rollup.tasks")}`}
+            </div>
+          </span>
+        )}
       </div>
       {open && hasChildren && (
         <ul className="pdg-tree">
           {node.children.map((c) => (
-            <TreeNode key={c.id} node={c} depth={depth + 1} selectedId={selectedId} onSelect={onSelect} costById={costById} />
+            <TreeNode
+              key={c.id}
+              node={c}
+              depth={depth + 1}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              costById={costById}
+              isAdmin={isAdmin}
+              onRenamed={onRenamed}
+            />
           ))}
         </ul>
       )}
