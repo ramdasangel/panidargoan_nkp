@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, useMap, CircleMarker } from "react-leaflet";
 import L from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 import "leaflet/dist/leaflet.css";
@@ -115,16 +115,47 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
         />
       )}
       <MapContainer center={[19.0, 74.1]} zoom={10} style={{ height: "100%", width: "100%" }}>
-        {layers.terrain ? (
-          <TileLayer
-            attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'
-            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-            maxZoom={17}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        {/* Bhuvan layers publish in EPSG:4326 only; force that CRS otherwise
+            GeoServer reprojects on the fly and tiles land at wrong scale. */}
+        {layers.waterSourcesBhuvan && (
+          <WMSTileLayer
+            url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
+            layers="mmi:MH_HYDROLOGY_R_Q4_2022"
+            format="image/png" transparent={true} version="1.1.1"
+            crs={L.CRS.EPSG4326} opacity={0.85}
+            attribution='Hydrology &copy; <a href="https://bhuvan.nrsc.gov.in">ISRO Bhuvan / NRSC</a>'
           />
-        ) : (
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        )}
+        {layers.bhuvanWaterbodies && (
+          <WMSTileLayer
+            url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
+            layers="basemap:waterbody_DEM"
+            format="image/png" transparent={true} version="1.1.1"
+            crs={L.CRS.EPSG4326} opacity={0.7}
+            attribution='Waterbodies &copy; <a href="https://bhuvan.nrsc.gov.in">Bhuvan</a>'
+          />
+        )}
+        {layers.bhuvanWatersheds && (
+          <WMSTileLayer
+            url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
+            layers="hydrology:WSHED"
+            format="image/png" transparent={true} version="1.1.1"
+            crs={L.CRS.EPSG4326} opacity={0.7}
+            attribution='Watersheds &copy; <a href="https://bhuvan.nrsc.gov.in">Bhuvan</a>'
+          />
+        )}
+        {layers.bhuvanSubbasins && (
+          <WMSTileLayer
+            url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
+            layers="hydrology:SUBBASIN"
+            format="image/png" transparent={true} version="1.1.1"
+            crs={L.CRS.EPSG4326} opacity={0.75}
+            attribution='Sub-basins &copy; <a href="https://bhuvan.nrsc.gov.in">Bhuvan</a>'
           />
         )}
 
@@ -136,11 +167,19 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
             style={(feature) => {
               const isFocused = focusWatershedId && (feature?.properties as { id: string }).id === focusWatershedId;
               const lvl = (feature?.properties as { level: number }).level;
+              // Outline-only when not focused so village green + taluka blue
+              // remain readable underneath. Heavier weight for higher-order
+              // basins so the hierarchy is still visible.
               return {
-                color: isFocused ? "#d81b60" : "#6a1b9a",
-                weight: isFocused ? 3 : 1 + Math.max(0, 3 - lvl) * 0.5,
+                color: isFocused ? "#d81b60" : "#9c27b0",
+                weight: isFocused
+                  ? 3
+                  : lvl === 1 ? 1.5
+                  : lvl === 2 ? 0.8
+                  : 0.4,
+                opacity: isFocused ? 1 : lvl <= 2 ? 0.55 : 0.3,
                 fillColor: "#9c27b0",
-                fillOpacity: isFocused ? 0.15 : 0.05,
+                fillOpacity: isFocused ? 0.18 : 0,
                 dashArray: lvl === 1 ? "8 4" : lvl === 2 ? "4 3" : undefined,
               };
             }}
@@ -165,17 +204,14 @@ export function MapView({ focusWatershedId, layers, addState, setAddState }: Pro
           />
         )}
 
-        {layers.villages && (
-          <GeoJSON
-            data={villages}
-            interactive={false}
-            style={{ color: "#2e7d32", weight: 1, fillColor: "#66bb6a", fillOpacity: 0.2 }}
-          />
-        )}
+        {/* Village polygons are intentionally not rendered — Voronoi cells
+            were visually noisy and obscured the watershed + Bhuvan layers.
+            The Village table is still queried for taluka/watershed lookups
+            and is shown in popups; we just don't draw its boundary. */}
 
-        {(layers.waterSourcesManual || layers.waterSourcesAuto) && (
+        {layers.waterSourcesManual && (
           <WaterSourcesLayer
-            data={filterBySource(waterSources, layers.waterSourcesManual, layers.waterSourcesAuto)}
+            data={onlyManual(waterSources)}
             interactive={!adding}
           />
         )}
@@ -243,14 +279,12 @@ function FlyToPoint({ focus }: { focus: LocationFocus | null }) {
   return null;
 }
 
-function filterBySource(data: FeatureCollection, showManual: boolean, showAuto: boolean): FeatureCollection {
+function onlyManual(data: FeatureCollection): FeatureCollection {
   return {
     type: "FeatureCollection",
-    features: data.features.filter((f) => {
-      const src = (f.properties as { source?: string } | null)?.source;
-      const isManual = src === "manual";
-      return isManual ? showManual : showAuto;
-    }),
+    features: data.features.filter(
+      (f) => (f.properties as { source?: string } | null)?.source === "manual"
+    ),
   };
 }
 

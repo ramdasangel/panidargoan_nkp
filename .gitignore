@@ -9,3 +9,4 @@ build/
 coverage/
 pgdata/
 client_secret_*.json
+.cache/

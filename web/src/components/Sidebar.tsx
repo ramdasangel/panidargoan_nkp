@@ -46,11 +46,10 @@ export function Sidebar(props: Props) {
   }, [summaries]);
 
   const overlays: Array<[keyof MapLayers, string]> = [
-    ["villages", t("map.layerVillages")],
     ["talukas", t("map.layerTalukas")],
     ["watersheds", t("map.layerWatersheds")],
     ["waterSourcesManual", t("map.layerWaterSourcesManual")],
-    ["waterSourcesAuto", t("map.layerWaterSourcesAuto")],
+    ["waterSourcesBhuvan", t("map.layerWaterSourcesBhuvan")],
   ];
 
   const classes = ["pdg-sidebar", open ? "open" : "folded"].join(" ");
@@ -86,10 +85,26 @@ export function Sidebar(props: Props) {
           <label className="pdg-menu-row">
             <input
               type="checkbox"
-              checked={layers.terrain}
-              onChange={(e) => onLayersChange({ ...layers, terrain: e.target.checked })}
+              checked={layers.bhuvanWaterbodies}
+              onChange={(e) => onLayersChange({ ...layers, bhuvanWaterbodies: e.target.checked })}
             />
-            <span>{t("map.layerTerrain")}</span>
+            <span>{t("map.layerBhuvanWaterbodies")}</span>
+          </label>
+          <label className="pdg-menu-row">
+            <input
+              type="checkbox"
+              checked={layers.bhuvanWatersheds}
+              onChange={(e) => onLayersChange({ ...layers, bhuvanWatersheds: e.target.checked })}
+            />
+            <span>{t("map.layerBhuvanWatersheds")}</span>
+          </label>
+          <label className="pdg-menu-row">
+            <input
+              type="checkbox"
+              checked={layers.bhuvanSubbasins}
+              onChange={(e) => onLayersChange({ ...layers, bhuvanSubbasins: e.target.checked })}
+            />
+            <span>{t("map.layerBhuvanSubbasins")}</span>
           </label>
         </Section>
 

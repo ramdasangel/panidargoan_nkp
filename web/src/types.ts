@@ -15,12 +15,13 @@ export type WaterSourceType =
   | "spring" | "other";
 
 export interface MapLayers {
-  villages: boolean;
   talukas: boolean;
   watersheds: boolean;
   waterSourcesManual: boolean;
-  waterSourcesAuto: boolean;
-  terrain: boolean;
+  waterSourcesBhuvan: boolean;
+  bhuvanWaterbodies: boolean;
+  bhuvanWatersheds: boolean;
+  bhuvanSubbasins: boolean;
 }
 
 export type WaterSourceOrigin = "manual" | "osm" | "imported";

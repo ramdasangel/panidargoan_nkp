@@ -93,6 +93,7 @@ enum WaterSourceOrigin {
   manual
   osm
   imported
+  srtm_nasa
 }
 
 enum WaterSourceType {

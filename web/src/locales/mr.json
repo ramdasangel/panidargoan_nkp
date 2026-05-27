@@ -28,13 +28,14 @@
     "slope": "सरासरी उतार",
     "slopeUnit": "%",
     "layers": "स्तर",
-    "layerVillages": "गावे",
     "layerTalukas": "तालुके",
     "layerWatersheds": "पाणलोट",
     "layerWaterSources": "पाणी स्रोत",
     "layerWaterSourcesManual": "पाणी स्रोत (स्वहस्ते नकाशा)",
-    "layerWaterSourcesAuto": "पाणी स्रोत (स्वयं स्रोत)",
-    "layerTerrain": "भूभाग (उंची नकाशा)",
+    "layerWaterSourcesBhuvan": "पाणी स्रोत (भुवन स्वयं)",
+    "layerBhuvanWaterbodies": "भुवन जलाशय",
+    "layerBhuvanWatersheds": "भुवन पाणलोट सीमा",
+    "layerBhuvanSubbasins": "भुवन उप-खोरे",
     "basemap": "बेस नकाशा"
   },
   "addWS": {
